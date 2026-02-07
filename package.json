@@ -1,0 +1,14 @@
+{
+    "name": "boda-abidan-betsaida",
+    "version": "1.0.0",
+    "description": "Sitio web de boda para Abidan y Betsaida",
+    "scripts": {
+        "dev": "python -m http.server 8000",
+        "test-keep-alive": "node scripts/test-keep-alive.js"
+    },
+    "dependencies": {
+        "@supabase/supabase-js": "^2.39.0"
+    },
+    "devDependencies": {},
+    "type": "module"
+}
