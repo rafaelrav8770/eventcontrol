@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Boda de Abidán & Betsaida | 28 de Marzo 2025</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description"
+        content="Acompáñanos a celebrar nuestra boda el 28 de marzo de 2025 a las 5:00 PM en Salón El Jardín. ¡Te esperamos!">
+    <meta name="keywords" content="boda, Abidán, Betsaida, invitación, matrimonio, 2025">
+
+    <!-- OpenGraph for WhatsApp/Social Sharing -->
+    <meta property="og:title" content="Boda de Abidán & Betsaida">
+    <meta property="og:description"
+        content="¡Nos casamos! Te invitamos a celebrar con nosotros el 28 de marzo de 2025.">
+    <meta property="og:type" content="website">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Great+Vibes&family=Montserrat:wght@300;400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+
+    <!-- Entry Screen -->
+    <div id="entry-screen" class="entry-screen">
+        <div class="entry-overlay"></div>
+        <div class="entry-content">
+            <p class="entry-subtitle fade-in">Nuestra Boda</p>
+            <div class="entry-initials fade-in delay-1">
+                <span class="initial">A</span>
+                <span class="separator"></span>
+                <span class="initial">B</span>
+            </div>
+            <p class="entry-date fade-in delay-2">28 de Marzo del 2025</p>
+            <p id="guest-pass" class="guest-pass fade-in delay-2"></p>
+            <button id="enter-btn" class="enter-btn fade-in delay-3">
+                <span>ENTRAR</span>
+            </button>
+        </div>
+        <div class="entry-ornament top-left"></div>
+        <div class="entry-ornament top-right"></div>
+        <div class="entry-ornament bottom-left"></div>
+        <div class="entry-ornament bottom-right"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="main-content hidden">
+
+        <!-- Hamburger Menu Button -->
+        <button id="menu-toggle" class="menu-toggle" aria-label="Abrir menú">
+            <span class="menu-line"></span>
+            <span class="menu-line"></span>
+            <span class="menu-line"></span>
+        </button>
+
+        <!-- Slide-out Navigation -->
+        <nav id="floating-nav" class="floating-nav">
+            <div class="nav-overlay"></div>
+            <div class="nav-panel">
+                <button class="nav-close" id="nav-close">&times;</button>
+                <ul>
+                    <li><a href="#hero">Inicio</a></li>
+                    <li><a href="#countdown">Cuenta Regresiva</a></li>
+                    <li><a href="#families">Familias</a></li>
+                    <li><a href="#event">Evento</a></li>
+                    <li><a href="#timeline">Itinerario</a></li>
+                    <li><a href="#gallery">Galería</a></li>
+                    <li><a href="#rsvp">Confirmar</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="hero" class="hero-section">
+            <div class="hero-bg"></div>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="ornament-top"></div>
+                <p class="hero-phrase animate-on-scroll">Nos Casamos</p>
+                <h1 class="hero-names animate-on-scroll">
+                    <span class="name groom-name"><span class="alt-font">A</span>bidán</span>
+                    <span class="ampersand">&</span>
+                    <span class="name bride-name">Betsaida</span>
+                </h1>
+                <div class="hero-line animate-on-scroll"></div>
+                <p class="hero-date animate-on-scroll">28 de Marzo del 2025</p>
+                <div class="ornament-bottom"></div>
+            </div>
+            <div class="scroll-indicator">
+                <span></span>
+            </div>
+        </section>
+
+        <!-- Invitation Text -->
+        <section class="invitation-text-section">
+            <div class="section-container">
+                <p class="invitation-message animate-on-scroll">
+                    Con inmensa alegría nos complace invitarlos a este día tan especial en el qué uniremos nuestras
+                    vidas para siempre porque nuestro amor es tan fuerte como la muerte y sus llamas son un fuego
+                    ardiente, la llama de Jah, por eso anhelamos ponernos como un sello sobre nuestros corazones <span
+                        class="bible-ref">(Eclesiastés 8:6)</span>
+                </p>
+            </div>
+        </section>
+
+        <!-- Couple Image -->
+        <section class="couple-image-section">
+            <div class="couple-image-container animate-on-scroll">
+                <!-- Image removed -->
+            </div>
+        </section>
+
+        <!-- Countdown -->
+        <section id="countdown" class="countdown-section">
+            <div class="section-container">
+                <h2 class="section-title animate-on-scroll">Faltan</h2>
+                <div class="countdown-timer animate-on-scroll">
+                    <div class="countdown-item">
+                        <span id="days" class="countdown-number">000</span>
+                        <span class="countdown-label">Días</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span id="hours" class="countdown-number">00</span>
+                        <span class="countdown-label">Horas</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span id="minutes" class="countdown-number">00</span>
+                        <span class="countdown-label">Minutos</span>
+                    </div>
+                    <div class="countdown-separator">:</div>
+                    <div class="countdown-item">
+                        <span id="seconds" class="countdown-number">00</span>
+                        <span class="countdown-label">Segundos</span>
+                    </div>
+                </div>
+                <p class="countdown-date animate-on-scroll">28 de Marzo del 2025 • 5:00 PM</p>
+            </div>
+        </section>
+
+        <!-- Couple Image -->
+        <section class="couple-image-section">
+            <div class="couple-image-container animate-on-scroll">
+                <!-- Image removed -->
+            </div>
+        </section>
+
+        <!-- Families -->
+        <section id="families" class="families-section">
+            <div class="section-container">
+                <h2 class="section-title animate-on-scroll">Nuestros Padres</h2>
+
+
+                <div class="families-grid">
+                    <div class="family-card animate-on-scroll">
+                        <div class="family-ornament"></div>
+                        <h3 class="family-title">Padres del Novio</h3>
+                        <div class="parents-names">
+                            <p class="parent-name">Elmer Rodríguez Constantino</p>
+                            <span class="parent-separator">&</span>
+                            <p class="parent-name">Martha Lilia Hernández Gutiérrez</p>
+                        </div>
+                    </div>
+
+                    <div class="family-card animate-on-scroll delay-1">
+                        <div class="family-ornament"></div>
+                        <h3 class="family-title">Padres de la Novia</h3>
+                        <div class="parents-names">
+                            <p class="parent-name">Genaro Villafuerte Santis</p>
+                            <span class="parent-separator">&</span>
+                            <p class="parent-name">Filadelfia Hernández Villatoro</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Couple Image -->
+        <section class="couple-image-section">
+            <div class="couple-image-container animate-on-scroll">
+                <!-- Image removed -->
+            </div>
+        </section>
+
+        <!-- Event Details -->
+        <section id="event" class="event-section">
+            <div class="section-container">
+                <h2 class="section-title animate-on-scroll">Detalles del Evento</h2>
+
+                <div class="event-cards">
+                    <!-- Fecha - Calendar Icon -->
+                    <div class="event-card animate-on-scroll">
+                        <div class="event-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="8" y="12" width="48" height="44" rx="4" />
+                                <line x1="8" y1="24" x2="56" y2="24" />
+                                <line x1="20" y1="6" x2="20" y2="16" />
+                                <line x1="44" y1="6" x2="44" y2="16" />
+                                <rect x="16" y="32" width="8" height="8" rx="1" />
+                                <rect x="28" y="32" width="8" height="8" rx="1" />
+                                <rect x="40" y="32" width="8" height="8" rx="1" />
+                                <rect x="16" y="44" width="8" height="8" rx="1" />
+                                <rect x="28" y="44" width="8" height="8" rx="1" />
+                            </svg>
+                        </div>
+                        <h3 class="event-card-title">Fecha</h3>
+                        <p class="event-card-text">Viernes, 28 de Marzo</p>
+                        <p class="event-card-subtext">2025</p>
+                    </div>
+
+                    <!-- Hora - Clock Icon -->
+                    <div class="event-card animate-on-scroll delay-1">
+                        <div class="event-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="32" cy="32" r="26" />
+                                <circle cx="32" cy="32" r="3" />
+                                <line x1="32" y1="12" x2="32" y2="16" />
+                                <line x1="32" y1="48" x2="32" y2="52" />
+                                <line x1="12" y1="32" x2="16" y2="32" />
+                                <line x1="48" y1="32" x2="52" y2="32" />
+                                <line x1="32" y1="32" x2="32" y2="20" />
+                                <line x1="32" y1="32" x2="42" y2="38" />
+                            </svg>
+                        </div>
+                        <h3 class="event-card-title">Hora</h3>
+                        <p class="event-card-text">5:00 PM</p>
+                        <p class="event-card-subtext">Puntualidad</p>
+                    </div>
+
+                    <!-- Ceremonia - Salón del Reino Icon -->
+                    <div class="event-card animate-on-scroll delay-2">
+                        <div class="event-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <!-- Roof -->
+                                <path d="M6 28 L32 10 L58 28" />
+                                <!-- Building body -->
+                                <rect x="10" y="28" width="44" height="28" rx="1" />
+                                <!-- Door frame -->
+                                <rect x="26" y="38" width="12" height="18" />
+                                <!-- Door panels -->
+                                <line x1="32" y1="38" x2="32" y2="56" />
+                                <!-- Windows left -->
+                                <rect x="14" y="34" width="8" height="10" />
+                                <line x1="18" y1="34" x2="18" y2="44" />
+                                <!-- Windows right -->
+                                <rect x="42" y="34" width="8" height="10" />
+                                <line x1="46" y1="34" x2="46" y2="44" />
+                                <!-- Fence posts -->
+                                <line x1="4" y1="56" x2="4" y2="48" />
+                                <line x1="8" y1="56" x2="8" y2="50" />
+                                <line x1="56" y1="56" x2="56" y2="50" />
+                                <line x1="60" y1="56" x2="60" y2="48" />
+                            </svg>
+                        </div>
+                        <h3 class="event-card-title">Ceremonia</h3>
+                        <p class="event-card-text">Salón "El Jardín"</p>
+                        <p class="event-card-subtext">Ceremonia Civil y Discurso de Bodas</p>
+                    </div>
+
+                    <!-- Recepción - Party Icon -->
+                    <div class="event-card animate-on-scroll delay-3">
+                        <div class="event-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M32 8 L32 56" />
+                                <path d="M32 8 C24 16, 20 28, 20 40" />
+                                <path d="M32 8 C40 16, 44 28, 44 40" />
+                                <path d="M16 12 L20 20 L12 20 Z" />
+                                <path d="M48 12 L52 20 L44 20 Z" />
+                                <circle cx="10" cy="16" r="2" />
+                                <circle cx="54" cy="16" r="2" />
+                                <circle cx="18" cy="8" r="2" />
+                                <circle cx="46" cy="8" r="2" />
+                                <ellipse cx="32" cy="56" rx="12" ry="4" />
+                            </svg>
+                        </div>
+                        <h3 class="event-card-title">Recepción</h3>
+                        <p class="event-card-text">Salón "El Jardín"</p>
+                        <p class="event-card-subtext">Fiesta y Celebración</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Couple Image -->
+        <section class="couple-image-section">
+            <div class="couple-image-container animate-on-scroll">
+                <!-- Image removed -->
+            </div>
+        </section>
+
+        <!-- Location -->
+        <section id="location" class="location-section">
+            <div class="section-container">
+                <h2 class="section-title animate-on-scroll">Ubicación</h2>
+                <p class="section-subtitle animate-on-scroll">Salón "El Jardín"</p>
+
+                <div class="map-container animate-on-scroll">
+                    <div class="map-address">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M32 4 C18 4, 8 16, 8 28 C8 44, 32 60, 32 60 C32 60, 56 44, 56 28 C56 16, 46 4, 32 4 Z" />
+                            <circle cx="32" cy="26" r="8" />
+                        </svg>
+                        <p class="address-text">Parque Nacional Cañón del Sumidero</p>
+                        <span class="address-city">Chiapas, México</span>
+                    </div>
+                </div>
+
+                <div class="location-buttons animate-on-scroll">
+                    <a href="https://maps.app.goo.gl/random" id="maps-btn" class="location-btn" target="_blank"
+                        rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M12 2 C7 2, 3 6.5, 3 11 C3 18, 12 22, 12 22 C12 22, 21 18, 21 11 C21 6.5, 17 2, 12 2 Z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        <span>Cómo Llegar</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Couple Image -->
+        <section class="couple-image-section">
+            <div class="couple-image-container animate-on-scroll">
+                <!-- Image removed -->
+            </div>
+        </section>
+
+        <!-- Timeline -->
+        <section id="timeline" class="timeline-section">
+            <div class="section-container">
+                <p class="section-subtitle animate-on-scroll punctuality-message">Agradecemos la puntualidad para estar
+                    presentes desde el ¡Sí acepto!, el momento en que dejaremos de ser dos y nos convertiremos en una
+                    sola carne, así que, si Jehová nos ha unido que nadie nos separe (Mateo 19:5 y 6)</p>
+                <h2 class="section-title animate-on-scroll">Itinerario</h2>
+
+                <div class="timeline">
+                    <!-- 1. Ceremonia Civil -->
+                    <div class="timeline-item animate-on-scroll">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">5:00 p.m.</span>
+                            <h3 class="timeline-title">Ceremonia Civil</h3>
+                        </div>
+                    </div>
+
+                    <!-- 2. Discurso -->
+                    <div class="timeline-item animate-on-scroll delay-1">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">5:30 p.m.</span>
+                            <h3 class="timeline-title">Discurso de boda</h3>
+                        </div>
+                    </div>
+
+                    <!-- 3. Recepción -->
+                    <div class="timeline-item animate-on-scroll delay-2">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">6:00 p.m.</span>
+                            <h3 class="timeline-title">Recepción</h3>
+                        </div>
+                    </div>
+
+                    <!-- 4. Fotos -->
+                    <div class="timeline-item animate-on-scroll delay-3">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">6:20 p.m.</span>
+                            <h3 class="timeline-title">Fotos con los invitados</h3>
+                        </div>
+                    </div>
+
+                    <!-- 5. Fiesta Start -->
+                    <div class="timeline-item animate-on-scroll delay-4">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">6:30 p.m.</span>
+                            <h3 class="timeline-title">¡Que empiece la fiesta!</h3>
+                        </div>
+                    </div>
+
+                    <!-- 6. Vals -->
+                    <div class="timeline-item animate-on-scroll delay-5">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">7:20 p.m.</span>
+                            <h3 class="timeline-title">Vals</h3>
+                        </div>
+                    </div>
+
+                    <!-- 7. Cena -->
+                    <div class="timeline-item animate-on-scroll delay-1">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">7:30 p.m.</span>
+                            <h3 class="timeline-title">Cena</h3>
+                            <p class="timeline-desc">¡Buen provecho!</p>
+                        </div>
+                    </div>
+
+                    <!-- 8. Fiesta Continue -->
+                    <div class="timeline-item animate-on-scroll delay-2">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">8:00 p.m.</span>
+                            <h3 class="timeline-title">¡Que siga la fiesta!</h3>
+                        </div>
+                    </div>
+
+                    <!-- 9. Pastel -->
+                    <div class="timeline-item animate-on-scroll delay-3">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">11:00 p.m.</span>
+                            <h3 class="timeline-title">Pastel</h3>
+                        </div>
+                    </div>
+
+                    <!-- 10. Fin -->
+                    <div class="timeline-item animate-on-scroll delay-4">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <span class="timeline-time">12:30 a.m.</span>
+                            <h3 class="timeline-title">Fin de la fiesta</h3>
+                            <p class="timeline-desc">gracias por acompañarnos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gallery -->
+        <section id="gallery" class="gallery-section">
+            <div class="section-container">
+                <h2 class="section-title animate-on-scroll">Nuestra Historia</h2>
+                <p class="section-subtitle animate-on-scroll">Momentos que atesoramos</p>
+
+                <div class="gallery-preview">
+                    <!-- Images removed -->
+                </div>
+
+                <!-- Hidden gallery items for lightbox -->
+                <div class="gallery-hidden" style="display: none;">
+                    <!-- Images removed -->
+                </div>
+            </div>
+        </section>
+
+        <!-- RSVP -->
+        <section id="rsvp" class="rsvp-section">
+            <div class="section-container">
+                <h2 class="section-title animate-on-scroll">Confirma tu Asistencia</h2>
+                <p class="section-subtitle animate-on-scroll">Tu presencia es muy importante para nosotros</p>
+
+                <div class="rsvp-buttons animate-on-scroll">
+                    <a href="confirm/" class="rsvp-btn primary" id="confirm-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Confirmar Asistencia</span>
+                    </a>
+                </div>
+
+                <p class="rsvp-info animate-on-scroll">
+                    Ingresa el código de 4 dígitos que te proporcionaron los novios<br>
+                    para descargar tu pase de acceso con código QR
+                </p>
+
+                <p class="rsvp-note animate-on-scroll">Favor de confirmar antes del 1 de marzo de 2025</p>
+            </div>
+        </section>
+
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-ornament"></div>
+            <p class="footer-names">Abidán & Betsaida</p>
+            <p class="footer-date">28 de Marzo del 2025</p>
+            <a href="admin/" class="footer-thanks">¡Gracias por ser parte de este amor que comienza y no conoce
+                final!</a>
+        </footer>
+
+    </div>
+
+    <!-- Modals -->
+
+    <!-- WhatsApp Confirmation Modal -->
+    <div id="whatsapp-modal" class="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <h3 class="modal-title">Confirmar Asistencia</h3>
+            <p class="modal-subtitle">Completa tus datos para confirmar</p>
+
+            <form id="rsvp-form" class="rsvp-form">
+                <div class="form-group">
+                    <label for="guest-name">Tu Nombre *</label>
+                    <input type="text" id="guest-name" name="name" required placeholder="Nombre completo">
+                </div>
+
+                <div class="form-group">
+                    <label for="guest-count">Número de Asistentes *</label>
+                    <select id="guest-count" name="guests" required>
+                        <option value="">Selecciona</option>
+                        <option value="1">1 persona</option>
+                        <option value="2">2 personas</option>
+                        <option value="3">3 personas</option>
+                        <option value="4">4 personas</option>
+                        <option value="5">5 personas</option>
+                        <option value="6+">6 o más personas</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="guest-note">Mensaje o Nota (opcional)</label>
+                    <textarea id="guest-note" name="note" placeholder="¿Algún mensaje para los novios?"></textarea>
+                </div>
+
+                <button type="submit" class="form-submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                    </svg>
+                    <span>Abrir WhatsApp</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pending Modal (for Groom) -->
+    <div id="pending-modal" class="modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content small">
+            <button class="modal-close" id="pending-close">&times;</button>
+            <div class="pending-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="1.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <h3 class="modal-title">En Configuración</h3>
+            <p class="pending-text">Aún estamos configurando el número del novio.<br>Por favor confirma con la novia por
+                el momento.</p>
+            <button class="pending-btn" id="pending-ok">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox">
+        <button class="lightbox-close">&times;</button>
+        <button class="lightbox-prev">&larr;</button>
+        <button class="lightbox-next">&rarr;</button>
+        <div class="lightbox-content">
+            <img id="lightbox-img" src="" alt="Galería">
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/countdown.js"></script>
+    <script src="js/gallery.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
