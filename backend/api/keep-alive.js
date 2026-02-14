@@ -1,52 +1,41 @@
-// ============================================
-// keep-alive.js — API endpoint para Vercel
-// Hace un ping a Supabase para que la base de datos
-// no se pause por inactividad (free tier)
-// ============================================
+// keep-alive.js
+// Script to keep Supabase project active by making a simple request
+// Run this with a cron job (e.g. GitHub Actions or Railway)
 
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 
-// Credenciales de Supabase (la anon key es publica, todo bien)
-const SUPABASE_URL = 'https://xethjgzynlkrwsirrzsf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhldGhqZ3p5bmxrcndzaXJyenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MjQ3ODgsImV4cCI6MjA4NjAwMDc4OH0.wD_eGAbyqL9maM4sqqeZ7kuaVcmkAu3VkKW1k0DuYIg';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-// Handler principal — se ejecuta cuando alguien llama a /api/keep-alive
-export default async function handler(req, res) {
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('Missing environment variables');
+    process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function pingDatabase() {
+    console.log(`[${new Date().toISOString()}] Pinging Supabase...`);
+
     try {
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Hacemos una consulta ligera — solo contamos cuantos pases hay
-        // Esto es suficiente para que Supabase no pause la BD
+        // Simple query to wake up the database
         const { data, error, count } = await supabase
-            .from('guest_passes')
+            .from('pases_invitados')
             .select('id', { count: 'exact', head: true });
 
         if (error) {
-            console.error('Error en consulta Supabase:', error);
-            return res.status(500).json({
-                success: false,
-                error: error.message,
-                timestamp: new Date().toISOString()
-            });
+            console.error('Ping failed:', error.message);
+            process.exit(1);
         }
 
-        console.log(`✅ Keep-alive exitoso - ${count} invitaciones en DB`);
+        console.log(`Ping successful. Table row count: ${count}`);
+        process.exit(0);
 
-        // Respondemos con info util y la fecha del proximo ping recomendado (4 dias)
-        return res.status(200).json({
-            success: true,
-            message: '✅ Ping keep-alive de Supabase exitoso',
-            passesCount: count,
-            timestamp: new Date().toISOString(),
-            nextPingRecommended: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString()
-        });
-
-    } catch (error) {
-        console.error('Error general:', error);
-        return res.status(500).json({
-            success: false,
-            error: error.message,
-            timestamp: new Date().toISOString()
-        });
+    } catch (err) {
+        console.error('Unexpected error:', err);
+        process.exit(1);
     }
 }
+
+pingDatabase();

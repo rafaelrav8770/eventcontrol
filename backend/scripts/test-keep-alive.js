@@ -1,49 +1,41 @@
-// ============================================
-// test-keep-alive.js — Script de prueba
-// Corre esto manualmente para verificar que la
-// conexion a Supabase sigue viva
-// Uso: node backend/scripts/test-keep-alive.js
-// ============================================
+// scripts/test-keep-alive.js
+// Simple script to test the keep-alive functionality locally
 
-// Credenciales — usamos la REST API directo (sin el SDK)
-const SUPABASE_URL = 'https://pwrixdojbrmtwyfmygys.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cml4ZG9qYnJtdHd5Zm15Z3lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MTkyNTQsImV4cCI6MjA4MjE5NTI1NH0.xR7kmjDRiECOu7usPyzNKcg-dtIQCRNdnuI49Sl799U';
+import 'dotenv/config';
 
-async function testKeepAlive() {
-    console.log('🔍 Probando conexión keep-alive a Supabase...\n');
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('Missing .env variables. Make sure SUPABASE_URL and SUPABASE_ANON_KEY are set.');
+    process.exit(1);
+}
+
+async function testConnection() {
+    console.log('Testing connection to:', SUPABASE_URL);
 
     try {
-        // Hacemos un HEAD request a la REST API — basicamente preguntamos
-        // "cuantas invitaciones hay?" sin descargar datos
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/guest_passes?select=id&limit=1`, {
-            method: 'HEAD',
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/pases_invitados?select=id&limit=1`, {
+            method: 'GET',
             headers: {
                 'apikey': SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                'Prefer': 'count=exact'
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
             }
         });
 
-        if (!response.ok) {
-            console.error('❌ Error HTTP:', response.status, response.statusText);
-            process.exit(1);
+        if (response.ok) {
+            console.log('Connection SUCCESS! Status:', response.status);
+            const data = await response.json();
+            console.log('Data sample:', data);
+        } else {
+            console.error('Connection FAILED. Status:', response.status, response.statusText);
+            const text = await response.text();
+            console.error('Response:', text);
         }
 
-        // El total viene en el header content-range (ej: "0-0/42")
-        const count = response.headers.get('content-range')?.split('/')[1] || '0';
-
-        console.log('✅ ÉXITO - Ping keep-alive de Supabase completado');
-        console.log(`📊 Invitaciones en DB: ${count}`);
-        console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
-        console.log(`🔄 Próximo ping recomendado: ${new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString()}\n`);
-
-        process.exit(0);
-
     } catch (error) {
-        console.error('❌ Error general:', error.message);
-        process.exit(1);
+        console.error('Fetch error:', error);
     }
 }
 
-// Arrancamos
-testKeepAlive();
+testConnection();

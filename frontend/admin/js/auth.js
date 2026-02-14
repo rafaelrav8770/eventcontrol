@@ -1,157 +1,95 @@
-// ============================================
-// auth.js — Autenticacion del Portal de Novios
-// Maneja login, verificacion de rol (novio/novia/acceso),
-// y redireccion al dashboard o al scanner
-// ============================================
+const supabaseInstance = window.supabaseClient;
 
-// Checamos si estamos en la pagina de login
-const isLoginPage = window.location.pathname.includes('index.html') ||
-    window.location.pathname.endsWith('/admin/') ||
-    window.location.pathname.endsWith('/admin');
+document.addEventListener('DOMContentLoaded', async () => {
+    // Solo ejecutar la logica de redireccion en la pagina de login (index.html),
+    // NO en el dashboard (que tiene su propio chequeo en dashboard.js).
+    const isLoginPage = window.location.pathname.endsWith('/admin/index.html')
+        || window.location.pathname.endsWith('/admin/')
+        || window.location.pathname === '/admin';
 
-// Si el usuario acaba de cerrar sesion, no lo redirigimos automaticamente
-const justLoggedOut = sessionStorage.getItem('justLoggedOut');
-if (justLoggedOut) {
-    sessionStorage.removeItem('justLoggedOut');
-}
+    if (!isLoginPage) return;
 
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('login-form');
+    // Check current session
+    const { data: { session } } = await supabaseInstance.auth.getSession();
 
-    // Solo checamos auth en la pagina de login (y si no acaba de cerrar sesion)
-    if (isLoginPage && loginForm && !justLoggedOut) {
-        checkAuth();
-        loginForm.addEventListener('submit', handleLogin);
-    } else if (isLoginPage && loginForm) {
-        loginForm.addEventListener('submit', handleLogin);
+    if (session) {
+        // User is logged in, redirect based on role
+        await checkUserRole(session.user.id);
+    } else {
+        // Init auth UI
+        initAuthForm();
     }
 });
 
-// Verifica si ya hay sesion activa y redirige al dashboard
-async function checkAuth() {
-    const supabase = window.supabaseClient;
-    if (!supabase) return;
+function initAuthForm() {
+    const loginForm = document.getElementById('login-form');
+    if (!loginForm) return;
 
-    try {
-        const { data: { session } } = await supabase.auth.getSession();
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-        if (session) {
-            // Checa si es novio o novia para mandarlo directo al dashboard
-            const { data: profile } = await supabase
-                .from('user_profiles')
-                .select('role')
-                .eq('id', session.user.id)
-                .single();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const submitBtn = loginForm.querySelector('button');
+        const errorMsg = document.getElementById('error-message');
 
-            if (profile && (profile.role === 'groom' || profile.role === 'bride')) {
-                window.location.href = 'dashboard.html';
-            }
-        }
-    } catch (error) {
-        console.error('Auth check error:', error);
-    }
-}
+        try {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Iniciando sesión...';
+            errorMsg.style.display = 'none';
 
-// Maneja el submit del formulario de login
-async function handleLogin(e) {
-    e.preventDefault();
-
-    const supabase = window.supabaseClient;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const errorEl = document.getElementById('error-message');
-    const submitBtn = document.querySelector('.login-btn');
-
-    // Deshabilitamos el boton mientras carga
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span>Ingresando...</span>';
-
-    console.log('🔐 Intentando login con:', email);
-
-    try {
-        // Paso 1: autenticamos con Supabase
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-        if (error) {
-            console.error('❌ Error de autenticación:', error);
-            throw error;
-        }
-
-        console.log('✅ Autenticación exitosa. User ID:', data.user.id);
-
-        // Paso 2: buscamos el perfil para saber que rol tiene
-        console.log('🔍 Buscando perfil de usuario...');
-        const { data: profile, error: profileError } = await supabase
-            .from('user_profiles')
-            .select('role, first_name, email')
-            .eq('id', data.user.id)
-            .single();
-
-        if (profileError) {
-            // Si no tiene perfil, le creamos uno por default como novio
-            console.error('⚠️ Error al obtener perfil:', profileError);
-            console.log('🔧 Creando perfil automáticamente...');
-
-            const { error: insertError } = await supabase.from('user_profiles').insert({
-                id: data.user.id,
-                email: data.user.email,
-                first_name: 'Novio/a',
-                role: 'groom'
+            const { data, error } = await supabaseInstance.auth.signInWithPassword({
+                email,
+                password
             });
 
-            if (insertError) {
-                console.error('❌ Error al crear perfil:', insertError);
-                throw new Error('No se pudo crear el perfil de usuario. Verifica las políticas RLS.');
-            }
+            if (error) throw error;
 
-            console.log('✅ Perfil creado exitosamente');
-        } else {
-            console.log('✅ Perfil encontrado:', profile);
+            console.log('Login successful:', data);
+            await checkUserRole(data.user.id);
+
+        } catch (error) {
+            console.error('Login error:', error);
+            errorMsg.textContent = 'Credenciales inválidas. Intenta de nuevo.';
+            errorMsg.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Iniciar Sesión';
         }
-
-        // Paso 3: redirigimos segun el rol
-        const userRole = profile ? profile.role : 'groom';
-        console.log('🎯 Rol del usuario:', userRole);
-
-        if (userRole === 'access_control') {
-            // Los de acceso van al scanner de QR
-            console.log('🚀 Redirigiendo a control de acceso...');
-            window.location.href = '../access-control/scanner.html';
-        } else {
-            // Novio/novia van al dashboard
-            console.log('🚀 Redirigiendo a dashboard...');
-            window.location.href = 'dashboard.html';
-        }
-
-    } catch (error) {
-        // Mostramos un mensaje amigable segun el tipo de error
-        let errorMessage = 'Error al iniciar sesión';
-
-        if (error.message && error.message.includes('Invalid login credentials')) {
-            errorMessage = 'Credenciales inválidas. Verifica tu correo y contraseña, o crea tu cuenta en Supabase Dashboard > Authentication.';
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-
-        errorEl.textContent = errorMessage;
-        errorEl.classList.remove('hidden');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<span>Ingresar</span>';
-    }
+    });
 }
 
-// Cerrar sesion limpiamente y evitar que se auto-loguee al volver
-async function logout() {
-    const supabase = window.supabaseClient;
-
+async function checkUserRole(userId) {
     try {
-        await supabase.auth.signOut();
-        sessionStorage.setItem('justLoggedOut', 'true');
-        window.location.href = 'index.html';
+        const { data, error } = await supabaseInstance
+            .from('perfiles_usuario')
+            .select('rol, nombre, correo')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Error fetching role:', error);
+            // If strictly needed, maybe sign out
+            // await supabaseInstance.auth.signOut();
+            return;
+        }
+
+        console.log('User profile:', data);
+
+        // Redirect logic
+        if (data.rol === 'access_control') {
+            window.location.href = '/access-control/scanner.html';
+        } else {
+            // Admin, groom, bride go to dashboard
+            window.location.href = '/admin/dashboard.html';
+        }
+
     } catch (error) {
-        console.error('Logout error:', error);
-        // Forzamos redirect aunque falle el signout
-        sessionStorage.setItem('justLoggedOut', 'true');
-        window.location.href = 'index.html';
+        console.error('Role check error:', error);
     }
 }
+
+// Global logout function
+window.logout = async function () {
+    await supabaseInstance.auth.signOut();
+    window.location.href = '/admin/index.html';
+};

@@ -569,12 +569,23 @@ body {
     animation: slideIn 0.3s ease;
 }
 
-.toast.success {
+.toast.success,
+.toast.toast-success {
     border-color: var(--success);
 }
 
-.toast.error {
+.toast.error,
+.toast.toast-error {
     border-color: var(--error);
+}
+
+.toast.toast-warning {
+    border-color: var(--warning);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateX(0);
 }
 
 @keyframes slideIn {
@@ -587,6 +598,28 @@ body {
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+/* --- Sub-elementos de entry y pending items --- */
+.entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--surface-light);
+    border-radius: 8px;
+    border-left: 3px solid var(--success);
+}
+
+.entry-name,
+.pending-name {
+    font-weight: 500;
+}
+
+.entry-detail,
+.pending-detail {
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
 /* --- Estado sin invitado encontrado --- */

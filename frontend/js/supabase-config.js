@@ -4,12 +4,17 @@
 // que necesitan base de datos (admin, confirm, access-control)
 // ============================================
 
-// Datos del proyecto en Supabase (la anon key es publica, tranqui)
-const SUPABASE_URL = 'https://xethjgzynlkrwsirrzsf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhldGhqZ3p5bmxrcndzaXJyenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MjQ3ODgsImV4cCI6MjA4NjAwMDc4OH0.wD_eGAbyqL9maM4sqqeZ7kuaVcmkAu3VkKW1k0DuYIg';
+// Leemos las credenciales desde window.ENV (inyectado por env.js)
+const env = window.ENV || {};
+const SUPABASE_URL = env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('CRITICAL: Supabase credentials not found. Make sure env.js is loaded before supabase-config.js');
+}
 
 // Creamos el cliente una sola vez y lo guardamos en window
 // asi cualquier otro script puede usarlo sin volver a crearlo
-if (!window.supabaseClient) {
+if (!window.supabaseClient && window.supabase) {
     window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 }

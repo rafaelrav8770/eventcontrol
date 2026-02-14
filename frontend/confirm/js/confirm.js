@@ -1,404 +1,275 @@
-// ============================================
-// confirm.js — Pagina de Confirmacion de Invitados
-// El invitado mete su codigo de 4 digitos,
-// se marca como confirmado en Supabase, y puede
-// descargar su invitacion con QR para presentar
-// el dia del evento.
-// ============================================
+// Usamos el cliente compartido creado por supabase-config.js
+const supabaseClient = window.supabaseClient;
 
-// Shortcut para Supabase
-function getSupabase() {
-    return window.supabaseClient;
-}
-
-// Pase actual del invitado
+// State
 let currentPass = null;
+let currentEventConfig = null;
 
 // =============================================
-// INICIALIZACION
+// INITIALIZATION
 // =============================================
-document.addEventListener('DOMContentLoaded', () => {
-    initBackgroundMusic();
-    initCodeInputs();
-    initForm();
-
-    // Si la URL tiene ?code=XXXX lo llenamos automatico
+document.addEventListener('DOMContentLoaded', async () => {
+    // Check if code is in URL
     const urlParams = new URLSearchParams(window.location.search);
-    const codeFromUrl = urlParams.get('code');
-    if (codeFromUrl && codeFromUrl.length === 4) {
-        fillCodeFromUrl(codeFromUrl.toUpperCase());
-    }
-});
+    const codeParam = urlParams.get('code');
 
-// =============================================
-// MUSICA DE FONDO
-// Continua desde donde quedo en la pagina principal
-// usando localStorage para recordar la posicion
-// =============================================
-function initBackgroundMusic() {
-    const music = document.getElementById('background-music');
-    if (!music) return;
+    await loadEventDetails();
 
-    music.volume = 0.5;
-
-    // Recuperamos donde se quedo la musica
-    const savedTime = parseFloat(localStorage.getItem('musicTime')) || 0;
-    const wasPlaying = localStorage.getItem('musicPlaying') === 'true';
-
-    // Guardamos la posicion cada medio segundo para que no se pierda
-    let savingInterval = null;
-    const startSavingTime = () => {
-        if (savingInterval) return;
-        savingInterval = setInterval(() => {
-            if (!music.paused) {
-                localStorage.setItem('musicTime', music.currentTime);
-                localStorage.setItem('musicPlaying', 'true');
-            }
-        }, 500);
-    };
-
-    // Restaura la posicion y empieza a tocar
-    const restoreAndPlay = (targetTime) => {
-        return new Promise((resolve) => {
-            if (targetTime > 0) {
-                const setPosition = () => {
-                    music.currentTime = targetTime;
-                    const onSeeked = () => {
-                        music.removeEventListener('seeked', onSeeked);
-                        music.play().then(() => {
-                            startSavingTime();
-                            resolve(true);
-                        }).catch(() => resolve(false));
-                    };
-                    music.addEventListener('seeked', onSeeked);
-                };
-
-                if (music.readyState >= 2) {
-                    setPosition();
-                } else {
-                    music.addEventListener('canplay', () => setPosition(), { once: true });
-                }
-            } else {
-                music.play().then(() => {
-                    startSavingTime();
-                    resolve(true);
-                }).catch(() => resolve(false));
-            }
+    if (codeParam) {
+        // Auto-fill code inputs from URL
+        const inputs = document.querySelectorAll('.code-input');
+        const chars = codeParam.toUpperCase().split('');
+        chars.forEach((char, i) => {
+            if (inputs[i]) inputs[i].value = char;
         });
-    };
-
-    // Si estaba sonando, intentamos continuar
-    if (wasPlaying) {
-        const latestTime = parseFloat(localStorage.getItem('musicTime')) || savedTime;
-        restoreAndPlay(latestTime).then((success) => {
-            if (!success) {
-                // Si el browser bloquea autoplay, esperamos al primer click
-                const playOnInteraction = () => {
-                    const currentLatestTime = parseFloat(localStorage.getItem('musicTime')) || savedTime;
-                    restoreAndPlay(currentLatestTime);
-                    document.removeEventListener('click', playOnInteraction);
-                    document.removeEventListener('touchstart', playOnInteraction);
-                    document.removeEventListener('keydown', playOnInteraction);
-                };
-
-                document.addEventListener('click', playOnInteraction);
-                document.addEventListener('touchstart', playOnInteraction);
-                document.addEventListener('keydown', playOnInteraction);
-            }
-        });
+        checkCode(codeParam.toUpperCase());
     }
-}
 
-// =============================================
-// INPUTS DEL CODIGO
-// 4 cajitas, con auto-avance, backspace y paste
-// =============================================
-function initCodeInputs() {
+    // Code input auto-advance and auto-submit
     const inputs = document.querySelectorAll('.code-input');
-
     inputs.forEach((input, index) => {
-        // Al escribir un caracter, salta al siguiente input
         input.addEventListener('input', (e) => {
-            const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-            e.target.value = value;
+            const val = e.target.value.toUpperCase();
+            e.target.value = val;
 
-            if (value && index < inputs.length - 1) {
+            if (val && index < inputs.length - 1) {
                 inputs[index + 1].focus();
             }
+
+            // Check if all 4 inputs are filled
+            const fullCode = Array.from(inputs).map(i => i.value).join('');
+            if (fullCode.length === 4) {
+                checkCode(fullCode);
+            }
         });
 
-        // Backspace en input vacio regresa al anterior
+        // Handle backspace to go to previous input
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' && !e.target.value && index > 0) {
                 inputs[index - 1].focus();
             }
         });
-
-        // Si pegan un codigo completo, lo distribuimos en las 4 cajitas
-        input.addEventListener('paste', (e) => {
-            e.preventDefault();
-            const paste = (e.clipboardData.getData('text') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-
-            for (let i = 0; i < Math.min(paste.length, 4); i++) {
-                if (inputs[i]) inputs[i].value = paste[i];
-            }
-
-            if (paste.length >= 4) inputs[3].focus();
-        });
     });
 
-    // Focus en el primer input al cargar
-    inputs[0]?.focus();
-}
-
-// Llena los inputs si el codigo viene en la URL
-function fillCodeFromUrl(code) {
-    const inputs = document.querySelectorAll('.code-input');
-    for (let i = 0; i < 4; i++) {
-        if (inputs[i] && code[i]) inputs[i].value = code[i];
+    // Form submit
+    const codeForm = document.getElementById('code-form');
+    if (codeForm) {
+        codeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const fullCode = Array.from(inputs).map(i => i.value).join('').toUpperCase();
+            if (fullCode.length === 4) {
+                checkCode(fullCode);
+            }
+        });
     }
-}
+});
 
 // =============================================
-// FORMULARIO — verificar codigo
+// LOAD EVENT DETAILS
 // =============================================
-function initForm() {
-    const form = document.getElementById('code-form');
-    form?.addEventListener('submit', handleCodeSubmit);
-
-    const downloadBtn = document.getElementById('download-btn');
-    downloadBtn?.addEventListener('click', downloadInvitation);
-}
-
-// Junta los 4 valores de los inputs
-function getCode() {
-    const inputs = document.querySelectorAll('.code-input');
-    return Array.from(inputs).map(i => i.value.toUpperCase()).join('');
-}
-
-// Al enviar el codigo, lo buscamos en Supabase
-async function handleCodeSubmit(e) {
-    e.preventDefault();
-    const supabase = getSupabase();
-
-    const code = getCode();
-    const errorEl = document.getElementById('error-message');
-    const btn = document.querySelector('.submit-btn');
-
-    if (code.length !== 4) {
-        showError('Por favor ingresa los 4 caracteres del código');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span>Verificando...</span>';
-    errorEl.classList.add('hidden');
-
+async function loadEventDetails() {
     try {
-        // Buscamos el pase con esa clave
-        const { data: pass, error } = await supabase
-            .from('guest_passes')
-            .select(`*, tables (table_number)`)
-            .eq('access_code', code)
+        const { data, error } = await supabaseClient
+            .from('configuracion_evento')
+            .select('*')
+            .limit(1)
             .single();
 
+        if (data) {
+            currentEventConfig = data;
+            updateEventUI(data);
+        }
+    } catch (e) {
+        console.error('Error loading event details', e);
+    }
+}
+
+function updateEventUI(config) {
+    // Update date/time if needed (currently static in HTML)
+    // const dateEl = document.querySelector('.event-date');
+    // if (dateEl && config.fecha_evento) {
+    //     ...
+    // }
+}
+
+// =============================================
+// CHECK CODE
+// =============================================
+async function checkCode(code) {
+    const errorEl = document.getElementById('error-message');
+    const submitBtn = document.querySelector('.submit-btn');
+
+    // Show loading state
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>Verificando...</span>';
+    }
+    if (errorEl) errorEl.classList.add('hidden');
+
+    try {
+        const { data: pass, error } = await supabaseClient
+            .from('pases_invitados')
+            .select(`*, mesas (numero_mesa)`)
+            .eq('codigo_acceso', code)
+            .single();
+
+        // Reset button
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Verificar Código</span>';
+        }
+
         if (error || !pass) {
-            throw new Error('Código no válido. Verifica e intenta nuevamente.');
+            showError('Código no encontrado. Por favor verifica.');
+            return;
         }
 
         currentPass = pass;
-        const alreadyConfirmed = pass.confirmed;
+        showSuccess(pass);
+        generateQRCode(code);
 
-        // Si es la primera vez, lo marcamos como confirmado
-        if (!alreadyConfirmed) {
-            await supabase
-                .from('guest_passes')
-                .update({ confirmed: true, confirmed_at: new Date().toISOString() })
-                .eq('id', pass.id);
+        // Auto-confirm if not confirmed
+        if (!pass.confirmado) {
+            confirmGuest(pass.id);
         }
 
-        // Registramos que descargo/vio su invitacion
-        await supabase
-            .from('invitation_downloads')
-            .insert({ guest_pass_id: pass.id });
-
-        // Pasamos al paso 2 con la info de su pase
-        showConfirmation(pass, alreadyConfirmed);
-
-    } catch (error) {
-        showError(error.message);
-        btn.disabled = false;
-        btn.innerHTML = '<span>Verificar Código</span>';
+    } catch (err) {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Verificar Código</span>';
+        }
+        console.error(err);
+        showError('Hubo un error al verificar. Intenta de nuevo.');
     }
 }
 
-// Muestra mensaje de error debajo del form
-function showError(message) {
+async function confirmGuest(passId) {
+    await supabaseClient
+        .from('pases_invitados')
+        .update({
+            confirmado: true,
+            confirmado_en: new Date().toISOString()
+        })
+        .eq('id', passId);
+}
+
+// =============================================
+// RENDER UI
+// =============================================
+function showError(msg) {
     const errorEl = document.getElementById('error-message');
-    errorEl.textContent = message;
-    errorEl.classList.remove('hidden');
-}
-
-// =============================================
-// PASO 2 — Ya confirmo, mostramos su info y QR
-// =============================================
-async function showConfirmation(pass, alreadyConfirmed = false) {
-    const tableNum = pass.tables?.table_number || '-';
-
-    // Cambiamos el mensaje segun si ya habia confirmado o es primera vez
-    const successIcon = document.querySelector('.success-icon');
-    const headerTitle = document.querySelector('#step-confirm h1');
-
-    if (alreadyConfirmed) {
-        if (successIcon) successIcon.textContent = '✓';
-        if (headerTitle) headerTitle.innerHTML = '¡Ya confirmaste!<br><small style="font-size: 0.5em; color: var(--text-muted);">Tu código QR sigue siendo válido</small>';
-    } else {
-        if (successIcon) successIcon.textContent = '✓';
-        if (headerTitle) headerTitle.textContent = '¡Confirmado!';
+    if (errorEl) {
+        errorEl.textContent = msg;
+        errorEl.classList.remove('hidden');
     }
+}
 
-    // Llenamos la info del invitado
-    document.getElementById('display-family').textContent = pass.family_name;
-    document.getElementById('display-guests').textContent = `${pass.total_guests} persona${pass.total_guests > 1 ? 's' : ''}`;
-    document.getElementById('display-table').textContent = `Mesa ${tableNum}`;
+function showSuccess(pass) {
+    const tableNum = pass.mesas?.numero_mesa || 'Por asignar';
 
-    // Llenamos el template de la invitacion descargable
-    document.getElementById('inv-family').textContent = pass.family_name;
-    document.getElementById('inv-guests').textContent = pass.total_guests;
-    document.getElementById('inv-table').textContent = tableNum;
-    document.getElementById('inv-code').textContent = pass.access_code;
+    // Update step-confirm display elements
+    const familyEl = document.getElementById('display-family');
+    const guestsEl = document.getElementById('display-guests');
+    const tableEl = document.getElementById('display-table');
 
-    // Generamos el QR y la preview
-    await generateQRCode(pass.access_code);
-    await generatePreview();
+    if (familyEl) familyEl.textContent = pass.nombre_familia;
+    if (guestsEl) guestsEl.textContent = `${pass.total_invitados} persona${pass.total_invitados > 1 ? 's' : ''}`;
+    if (tableEl) tableEl.textContent = `Mesa ${tableNum}`;
 
-    // Cambiamos de vista (paso 1 -> paso 2)
-    document.getElementById('step-code').classList.add('hidden');
-    document.getElementById('step-confirm').classList.remove('hidden');
+    // Update invitation template elements
+    const invFamily = document.getElementById('inv-family');
+    const invGuests = document.getElementById('inv-guests');
+    const invTable = document.getElementById('inv-table');
+    const invCode = document.getElementById('inv-code');
+
+    if (invFamily) invFamily.textContent = pass.nombre_familia;
+    if (invGuests) invGuests.textContent = pass.total_invitados;
+    if (invTable) invTable.textContent = tableNum;
+    if (invCode) invCode.textContent = pass.codigo_acceso;
+
+    // Switch from step-code to step-confirm
+    const stepCode = document.getElementById('step-code');
+    const stepConfirm = document.getElementById('step-confirm');
+
+    if (stepCode) stepCode.classList.add('hidden');
+    if (stepConfirm) stepConfirm.classList.remove('hidden');
 }
 
 // =============================================
-// GENERACION DE QR
+// QR GENERATION
 // =============================================
-async function generateQRCode(code) {
-    const qrContainer = document.getElementById('qr-canvas');
-    qrContainer.innerHTML = '';
+function generateQRCode(text) {
+    // Wait for DOM to update after switching steps
+    setTimeout(() => {
+        const container = document.getElementById('qr-canvas');
+        if (!container) return;
 
-    try {
-        new QRCode(qrContainer, {
-            text: code,
-            width: 180,
-            height: 180,
-            colorDark: '#000000',
-            colorLight: '#ffffff',
+        container.innerHTML = '';
+        new QRCode(container, {
+            text: text,
+            width: 128,
+            height: 128,
+            colorDark: "#2c3e50",
+            colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
         });
-    } catch (error) {
-        console.error('Error generating QR:', error);
-    }
+    }, 100);
 }
 
 // =============================================
-// PREVIEW — muestra como se vera la invitacion
+// DOWNLOAD IMAGE
 // =============================================
-async function generatePreview() {
-    const template = document.querySelector('.invitation-card');
-    const preview = document.getElementById('invitation-preview');
+window.downloadInvitation = async function () {
+    const card = document.getElementById('invitation-template');
+    if (!card) return;
+
+    // Temporarily make it visible for rendering
+    card.style.position = 'fixed';
+    card.style.left = '-9999px';
+    card.style.display = 'block';
 
     try {
-        // Movemos el template a un lugar visible temporalmente para capturarlo
-        const templateContainer = document.getElementById('invitation-template');
-        templateContainer.style.left = '0';
-        templateContainer.style.position = 'absolute';
-        templateContainer.style.visibility = 'visible';
+        const btn = document.getElementById('download-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span>Generando...</span>';
+        btn.disabled = true;
 
-        const canvas = await html2canvas(template, {
+        // Log download
+        if (currentPass) {
+            await supabaseClient.from('descargas_invitacion').insert({ pase_id: currentPass.id });
+        }
+
+        const canvas = await html2canvas(card, {
             scale: 2,
             backgroundColor: null,
-            useCORS: true
+            logging: false
         });
 
-        // Lo regresamos a donde estaba (fuera de pantalla)
-        templateContainer.style.left = '-9999px';
-        templateContainer.style.position = 'fixed';
-        templateContainer.style.visibility = 'hidden';
+        // Hide the template again
+        card.style.display = '';
+        card.style.position = '';
+        card.style.left = '';
 
-        const img = document.createElement('img');
-        img.src = canvas.toDataURL('image/png');
-        img.alt = 'Vista previa de tu invitación';
-        img.style.maxWidth = '100%';
-        img.style.borderRadius = '10px';
-
-        preview.innerHTML = '';
-        preview.appendChild(img);
-
-    } catch (error) {
-        console.error('Error generating preview:', error);
-        preview.innerHTML = '<p style="color: var(--text-muted); padding: 2rem;">Vista previa no disponible</p>';
-    }
-}
-
-// =============================================
-// DESCARGA DE INVITACION
-// Genera una imagen PNG de alta calidad de la invitacion
-// =============================================
-async function downloadInvitation() {
-    if (!currentPass) return;
-
-    const btn = document.getElementById('download-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span>Generando...</span>';
-
-    try {
-        const template = document.querySelector('.invitation-card');
-        const templateContainer = document.getElementById('invitation-template');
-
-        // Hacemos visible para capturar
-        templateContainer.style.left = '0';
-        templateContainer.style.position = 'absolute';
-        templateContainer.style.visibility = 'visible';
-
-        const canvas = await html2canvas(template, {
-            scale: 3, // alta calidad para que se vea bien al imprimir
-            backgroundColor: null,
-            useCORS: true
-        });
-
-        // Regresamos a su lugar
-        templateContainer.style.left = '-9999px';
-        templateContainer.style.position = 'fixed';
-        templateContainer.style.visibility = 'hidden';
-
-        // Creamos el link de descarga
         const link = document.createElement('a');
-        link.download = `Invitacion-${currentPass.family_name.replace(/\s+/g, '_')}.png`;
-        link.href = canvas.toDataURL('image/png', 1.0);
+        link.download = `Invitacion_Boda_${currentPass.nombre_familia.replace(/\s+/g, '_')}.png`;
+        link.href = canvas.toDataURL('image/png');
         link.click();
 
-        // Feedback visual de que se descargo
-        btn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-            <span>¡Descargado!</span>
-        `;
-
-        // Despues de 3 segundos volvemos al boton normal
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                <span>Descargar Invitación con QR</span>
-            `;
-        }, 3000);
-
-    } catch (error) {
-        console.error('Error downloading:', error);
+        btn.innerHTML = originalText;
         btn.disabled = false;
-        btn.innerHTML = '<span>Error - Intenta de nuevo</span>';
+
+    } catch (err) {
+        // Hide the template on error too
+        card.style.display = '';
+        card.style.position = '';
+        card.style.left = '';
+
+        console.error(err);
+        alert('No se pudo descargar la imagen. Puedes tomar una captura de pantalla.');
+        const btn = document.getElementById('download-btn');
+        if (btn) {
+            btn.innerHTML = '<span>Error al descargar</span>';
+            btn.disabled = false;
+        }
     }
-}
+};

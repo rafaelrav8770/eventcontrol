@@ -9,16 +9,16 @@
 -- 1. Ver los perfiles que ya existen
 SELECT 
     id,
-    email,
-    first_name,
-    role,
-    created_at
-FROM user_profiles
-ORDER BY created_at DESC;
+    correo,
+    nombre,
+    rol,
+    creado_en
+FROM perfiles_usuario
+ORDER BY creado_en DESC;
 
 
 -- 2. Crear/actualizar el perfil del NOVIO (Abidan)
-INSERT INTO user_profiles (id, email, first_name, role)
+INSERT INTO perfiles_usuario (id, correo, nombre, rol)
 VALUES (
     '375c26ed-6284-49bb-a9d9-aee27ea64f45',
     'abi@miboda.com',
@@ -27,12 +27,12 @@ VALUES (
 )
 ON CONFLICT (id) DO UPDATE 
 SET 
-    email = EXCLUDED.email,
-    first_name = EXCLUDED.first_name,
-    role = EXCLUDED.role;
+    correo = EXCLUDED.correo,
+    nombre = EXCLUDED.nombre,
+    rol = EXCLUDED.rol;
 
 -- 3. Crear/actualizar el perfil de la NOVIA (Betsaida)
-INSERT INTO user_profiles (id, email, first_name, role)
+INSERT INTO perfiles_usuario (id, correo, nombre, rol)
 VALUES (
     '40cb3f00-02af-4816-89ac-6a4127b69100',
     'betsi@miboda.com',
@@ -41,12 +41,12 @@ VALUES (
 )
 ON CONFLICT (id) DO UPDATE 
 SET 
-    email = EXCLUDED.email,
-    first_name = EXCLUDED.first_name,
-    role = EXCLUDED.role;
+    correo = EXCLUDED.correo,
+    nombre = EXCLUDED.nombre,
+    rol = EXCLUDED.rol;
 
 -- 4. Crear/actualizar el perfil del GUARDIA (Recepcion / control de acceso)
-INSERT INTO user_profiles (id, email, first_name, role)
+INSERT INTO perfiles_usuario (id, correo, nombre, rol)
 VALUES (
     'e1049ca1-3d66-4cf6-ab4e-08d5362c76c1',
     'recepcion@miboda.com',
@@ -55,19 +55,19 @@ VALUES (
 )
 ON CONFLICT (id) DO UPDATE 
 SET 
-    email = EXCLUDED.email,
-    first_name = EXCLUDED.first_name,
-    role = EXCLUDED.role;
+    correo = EXCLUDED.correo,
+    nombre = EXCLUDED.nombre,
+    rol = EXCLUDED.rol;
 
 
 -- 5. Verificar que los 3 perfiles quedaron bien
 SELECT 
     id,
-    email,
-    first_name,
-    role,
-    created_at
-FROM user_profiles
+    correo,
+    nombre,
+    rol,
+    creado_en
+FROM perfiles_usuario
 WHERE id IN (
     '375c26ed-6284-49bb-a9d9-aee27ea64f45',
     '40cb3f00-02af-4816-89ac-6a4127b69100',

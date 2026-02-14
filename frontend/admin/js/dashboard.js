@@ -64,7 +64,7 @@ async function checkDashboardAuth() {
 async function loadUserProfile() {
     const supabase = getSupabase();
     const { data: profile } = await supabase
-        .from('user_profiles')
+        .from('perfiles_usuario')
         .select('*')
         .eq('id', currentUser.id)
         .single();
@@ -78,7 +78,7 @@ async function loadUserProfile() {
 function updateUserGreeting() {
     const greetingEl = document.getElementById('user-greeting');
     if (greetingEl && userProfile) {
-        greetingEl.textContent = `Hola, ${userProfile.first_name}`;
+        greetingEl.textContent = `Hola, ${userProfile.nombre}`;
     }
 }
 
@@ -182,7 +182,7 @@ async function loadDashboardDataAsync() {
 async function loadEventConfig() {
     const supabase = getSupabase();
     const { data, error } = await supabase
-        .from('event_config')
+        .from('configuracion_evento')
         .select('*')
         .limit(1)
         .single();
@@ -192,8 +192,8 @@ async function loadEventConfig() {
     } else {
         // Create default config
         const { data: newConfig } = await getSupabase()
-            .from('event_config')
-            .insert({ total_tables: 10, seats_per_table: 8 })
+            .from('configuracion_evento')
+            .insert({ total_mesas: 10, asientos_por_mesa: 8 })
             .select()
             .single();
 
@@ -205,9 +205,9 @@ async function loadEventConfig() {
 async function loadTables() {
     const supabase = getSupabase();
     const { data, error } = await supabase
-        .from('tables')
+        .from('mesas')
         .select('*')
-        .order('table_number');
+        .order('numero_mesa');
 
     if (error) {
         console.error('Error loading tables:', error);
@@ -229,14 +229,14 @@ function updateTablesCount() {
 
     if (countEl) countEl.textContent = tables.length;
     if (capacityEl) {
-        const total = tables.reduce((sum, t) => sum + t.capacity, 0);
+        const total = tables.reduce((sum, t) => sum + t.capacidad, 0);
         capacityEl.textContent = total;
     }
 
     // Show/hide bulk delete button
     const bulkActions = document.getElementById('tables-bulk-actions');
     if (bulkActions) {
-        const hasEmptyTables = tables.some(t => t.occupied_seats === 0);
+        const hasEmptyTables = tables.some(t => t.asientos_ocupados === 0);
         bulkActions.style.display = hasEmptyTables ? 'block' : 'none';
     }
 }
@@ -245,9 +245,9 @@ function updateTablesCount() {
 async function loadPasses() {
     const supabase = getSupabase();
     const { data, error } = await supabase
-        .from('guest_passes')
-        .select(`*, tables (table_number)`)
-        .order('created_at', { ascending: false });
+        .from('pases_invitados')
+        .select(`*, mesas (numero_mesa), registros_entrada (*)`)
+        .order('creado_en', { ascending: false });
 
     if (error) {
         console.error('Error loading passes:', error);
@@ -270,7 +270,7 @@ async function loadCreatorProfiles() {
     const supabase = getSupabase();
 
     // Get unique creator IDs
-    const creatorIds = [...new Set(passes.map(p => p.created_by).filter(Boolean))];
+    const creatorIds = [...new Set(passes.map(p => p.creado_por).filter(Boolean))];
 
     console.log('Loading creator profiles for IDs:', creatorIds);
 
@@ -280,8 +280,8 @@ async function loadCreatorProfiles() {
     }
 
     const { data: profiles, error } = await supabase
-        .from('user_profiles')
-        .select('id, first_name, role')
+        .from('perfiles_usuario')
+        .select('id, nombre, rol')
         .in('id', creatorIds);
 
     if (error) {
@@ -299,8 +299,8 @@ async function loadCreatorProfiles() {
 
         // Attach creator info to passes
         passes.forEach(pass => {
-            if (pass.created_by && userProfiles[pass.created_by]) {
-                pass.creator = userProfiles[pass.created_by];
+            if (pass.creado_por && userProfiles[pass.creado_por]) {
+                pass.creator = userProfiles[pass.creado_por];
             }
         });
 
@@ -316,13 +316,13 @@ function updateCreatorFilterCounts() {
     let brideGuests = 0;
 
     passes.forEach(pass => {
-        const guests = pass.total_guests || 0;
+        const guests = pass.total_invitados || 0;
         totalGuests += guests;
 
         if (pass.creator) {
-            if (pass.creator.role === 'groom') {
+            if (pass.creator.rol === 'groom') {
                 groomGuests += guests;
-            } else if (pass.creator.role === 'bride') {
+            } else if (pass.creator.rol === 'bride') {
                 brideGuests += guests;
             }
         }
@@ -352,22 +352,22 @@ function updateStats() {
     document.getElementById('stat-tables').textContent = tables.length;
     document.getElementById('stat-passes').textContent = passes.length;
 
-    const confirmed = passes.filter(p => p.confirmed).length;
+    const confirmed = passes.filter(p => p.confirmado).length;
     document.getElementById('stat-confirmed').textContent = confirmed;
 
-    const totalGuests = passes.reduce((sum, p) => sum + p.total_guests, 0);
+    const totalGuests = passes.reduce((sum, p) => sum + p.total_invitados, 0);
     document.getElementById('stat-guests').textContent = totalGuests;
 
     // Update chart
-    const pending = passes.filter(p => !p.confirmed).length;
-    const inside = passes.filter(p => p.guests_entered > 0).length;
+    const pending = passes.filter(p => !p.confirmado).length;
+    const inside = passes.filter(p => p.invitados_ingresados > 0).length;
 
     document.getElementById('chart-pending').textContent = pending;
     document.getElementById('chart-confirmed').textContent = confirmed;
     document.getElementById('chart-inside').textContent = inside;
 
     // Update total capacity
-    const capacity = tables.reduce((sum, t) => sum + t.capacity, 0);
+    const capacity = tables.reduce((sum, t) => sum + t.capacidad, 0);
     document.getElementById('total-capacity').textContent = capacity;
 }
 
@@ -381,15 +381,15 @@ function renderTablesGrid() {
     if (!container) return;
 
     container.innerHTML = tables.map(table => {
-        const occupiedPercent = (table.occupied_seats / table.capacity) * 100;
+        const occupiedPercent = (table.asientos_ocupados / table.capacidad) * 100;
         const statusClass = occupiedPercent >= 100 ? 'full' :
             occupiedPercent >= 50 ? 'partial' : 'empty';
 
         return `
-            <div class="table-item ${statusClass}" onclick="showTableGuests('${table.id}', ${table.table_number})" style="cursor: pointer;">
-                <div class="table-number">Mesa ${table.table_number}</div>
+            <div class="table-item ${statusClass}" onclick="showTableGuests('${table.id}', ${table.numero_mesa})" style="cursor: pointer;">
+                <div class="table-number">Mesa ${table.numero_mesa}</div>
                 <div class="table-occupancy">
-                    ${table.occupied_seats} / ${table.capacity}
+                    ${table.asientos_ocupados} / ${table.capacidad}
                 </div>
                 <div class="table-bar">
                     <div class="table-bar-fill" style="width: ${occupiedPercent}%"></div>
@@ -411,14 +411,14 @@ function populateTableSelect() {
 
     select.innerHTML = '<option value="">Selecciona una mesa</option>' +
         tables.map(table => {
-            const available = table.capacity - table.occupied_seats;
+            const available = table.capacidad - table.asientos_ocupados;
             // Show all tables, but disable if not enough space
             const isEnoughSpace = available >= requiredSeats;
             const disabled = !isEnoughSpace ? 'disabled' : '';
             const statusText = available === 0 ? 'llena' : `${available} lugares disponibles`;
 
             return `<option value="${table.id}" ${disabled}>
-                Mesa ${table.table_number} (${statusText})
+                Mesa ${table.numero_mesa} (${statusText})
             </option>`;
         }).join('');
 
@@ -475,22 +475,22 @@ function renderTablesList() {
     }
 
     container.innerHTML = tables.map(table => {
-        const isOccupied = table.occupied_seats > 0;
+        const isOccupied = table.asientos_ocupados > 0;
         const statusClass = isOccupied ? 'occupied' : 'empty';
-        const guestsAssigned = passes.filter(p => p.table_id === table.id);
-        const totalGuests = guestsAssigned.reduce((sum, p) => sum + p.total_guests, 0);
+        const guestsAssigned = passes.filter(p => p.mesa_id === table.id);
+        const totalGuests = guestsAssigned.reduce((sum, p) => sum + p.total_invitados, 0);
 
         return `
-            <div class="table-list-item ${statusClass}" onclick="showTableGuests('${table.id}', ${table.table_number})" style="cursor: pointer;">
+            <div class="table-list-item ${statusClass}" onclick="showTableGuests('${table.id}', ${table.numero_mesa})" style="cursor: pointer;">
                 <div class="table-info">
-                    <span class="table-number">Mesa ${table.table_number}</span>
-                    <span class="table-capacity">${table.capacity} personas</span>
+                    <span class="table-number">Mesa ${table.numero_mesa}</span>
+                    <span class="table-capacity">${table.capacidad} personas</span>
                     ${isOccupied ? `<span class="table-occupied">${guestsAssigned.length} familia${guestsAssigned.length > 1 ? 's' : ''} (${totalGuests} personas)</span>` : '<span class="table-empty-label">Sin asignar</span>'}
                 </div>
                 <div class="table-actions">
                     <button type="button" 
                         class="btn-view-table"
-                        onclick="event.stopPropagation(); showTableGuests('${table.id}', ${table.table_number})"
+                        onclick="event.stopPropagation(); showTableGuests('${table.id}', ${table.numero_mesa})"
                         title="Ver invitados">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -498,7 +498,7 @@ function renderTablesList() {
                         </svg>
                     </button>
                     <button type="button" 
-                        onclick="event.stopPropagation(); deleteSingleTable('${table.id}', ${table.table_number}, ${isOccupied})" 
+                        onclick="event.stopPropagation(); deleteSingleTable('${table.id}', ${table.numero_mesa}, ${isOccupied})" 
                         class="btn-delete-table"
                         title="${isOccupied ? 'Eliminar mesa (invitados quedarán sin asignar)' : 'Eliminar mesa'}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -526,16 +526,16 @@ async function addSingleTable() {
 
     // Get next table number
     const nextNumber = tables.length > 0
-        ? Math.max(...tables.map(t => t.table_number)) + 1
+        ? Math.max(...tables.map(t => t.numero_mesa)) + 1
         : 1;
 
     try {
         const { error } = await supabase
-            .from('tables')
+            .from('mesas')
             .insert([{
-                table_number: nextNumber,
-                capacity: capacity,
-                occupied_seats: 0
+                numero_mesa: nextNumber,
+                capacidad: capacity,
+                asientos_ocupados: 0
             }]);
 
         if (error) throw error;
@@ -571,21 +571,21 @@ async function addMultipleTables() {
 
     // Get next table number
     let nextNumber = tables.length > 0
-        ? Math.max(...tables.map(t => t.table_number)) + 1
+        ? Math.max(...tables.map(t => t.numero_mesa)) + 1
         : 1;
 
     const newTables = [];
     for (let i = 0; i < quantity; i++) {
         newTables.push({
-            table_number: nextNumber++,
-            capacity: capacity,
-            occupied_seats: 0
+            numero_mesa: nextNumber++,
+            capacidad: capacity,
+            asientos_ocupados: 0
         });
     }
 
     try {
         const { error } = await supabase
-            .from('tables')
+            .from('mesas')
             .insert(newTables);
 
         if (error) throw error;
@@ -654,16 +654,16 @@ async function deleteSingleTable(tableId, tableNumber, isOccupied) {
             // If table has guests, unassign them first
             if (isOccupied) {
                 const { error: unassignError } = await supabase
-                    .from('guest_passes')
-                    .update({ table_id: null })
-                    .eq('table_id', tableId);
+                    .from('pases_invitados')
+                    .update({ mesa_id: null })
+                    .eq('mesa_id', tableId);
 
                 if (unassignError) throw unassignError;
             }
 
             // Delete the table
             const { error } = await supabase
-                .from('tables')
+                .from('mesas')
                 .delete()
                 .eq('id', tableId);
 
@@ -682,7 +682,7 @@ async function deleteSingleTable(tableId, tableNumber, isOccupied) {
 
 // Elimina todas las mesas vacias de un jalon
 async function deleteAllEmptyTables() {
-    const emptyTables = tables.filter(t => t.occupied_seats === 0);
+    const emptyTables = tables.filter(t => t.asientos_ocupados === 0);
 
     if (emptyTables.length === 0) {
         showToast('No hay mesas vacías para eliminar', 'info');
@@ -694,9 +694,9 @@ async function deleteAllEmptyTables() {
 
         try {
             const { error } = await supabase
-                .from('tables')
+                .from('mesas')
                 .delete()
-                .eq('occupied_seats', 0);
+                .eq('asientos_ocupados', 0);
 
             if (error) throw error;
 
@@ -746,9 +746,9 @@ async function handleCreatePass(e) {
         return;
     }
 
-    const available = table.capacity - table.occupied_seats;
+    const available = table.capacidad - table.asientos_ocupados;
     if (guestCount > available) {
-        showToast(`La Mesa ${table.table_number} solo tiene ${available} lugares disponibles`, 'error');
+        showToast(`La Mesa ${table.numero_mesa} solo tiene ${available} lugares disponibles`, 'error');
         return;
     }
 
@@ -760,9 +760,9 @@ async function handleCreatePass(e) {
 
         while (!isUnique && attempts < 10) {
             const { data } = await supabase
-                .from('guest_passes')
+                .from('pases_invitados')
                 .select('id')
-                .eq('access_code', code)
+                .eq('codigo_acceso', code)
                 .single();
 
             if (!data) {
@@ -775,14 +775,14 @@ async function handleCreatePass(e) {
 
         // Create pass
         const { data: newPass, error } = await supabase
-            .from('guest_passes')
+            .from('pases_invitados')
             .insert({
-                access_code: code,
-                family_name: familyName,
-                total_guests: guestCount,
-                table_id: tableId,
-                created_by: currentUser.id,
-                phone: phone || null
+                codigo_acceso: code,
+                nombre_familia: familyName,
+                total_invitados: guestCount,
+                mesa_id: tableId,
+                creado_por: currentUser.id,
+                telefono: phone || null
             })
             .single();
 
@@ -791,8 +791,8 @@ async function handleCreatePass(e) {
         // Update table occupied seats
         const table = tables.find(t => t.id === tableId);
         await supabase
-            .from('tables')
-            .update({ occupied_seats: table.occupied_seats + guestCount })
+            .from('mesas')
+            .update({ asientos_ocupados: table.asientos_ocupados + guestCount })
             .eq('id', tableId);
 
         // Show generated code
@@ -845,14 +845,14 @@ function loadRecentPasses() {
 
     container.innerHTML = recent.map(pass => {
         const status = getPassStatus(pass);
-        const tableNum = pass.tables?.table_number || '-';
+        const tableNum = pass.mesas?.numero_mesa || '-';
 
         return `
             <div class="recent-pass-card">
                 <div class="recent-pass-info">
                     <div class="recent-pass-header">
-                        <span class="recent-pass-family">${pass.family_name}</span>
-                        <code class="recent-pass-code">${pass.access_code}</code>
+                        <span class="recent-pass-family">${pass.nombre_familia}</span>
+                        <code class="recent-pass-code">${pass.codigo_acceso}</code>
                     </div>
                     <div class="recent-pass-details">
                         <span class="detail-item">
@@ -862,7 +862,7 @@ function loadRecentPasses() {
                                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
-                            ${pass.total_guests}
+                            ${pass.total_invitados}
                         </span>
                         <span class="detail-item">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -874,7 +874,7 @@ function loadRecentPasses() {
                         <span class="status-badge ${status.class}">${status.text}</span>
                     </div>
                 </div>
-                <button class="btn-copy-compact" onclick="copyPassCode('${pass.access_code}')" title="Copiar código">
+                <button class="btn-copy-compact" onclick="copyPassCode('${pass.codigo_acceso}')" title="Copiar código">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -907,9 +907,9 @@ function loadGuests() {
 
     container.innerHTML = passes.map(pass => {
         const status = getPassStatus(pass);
-        const tableNum = pass.tables?.table_number || '-';
-        const confirmedDate = pass.confirmed_at
-            ? new Date(pass.confirmed_at).toLocaleDateString('es-MX', {
+        const tableNum = pass.mesas?.numero_mesa || '-';
+        const confirmedDate = pass.confirmado_en
+            ? new Date(pass.confirmado_en).toLocaleDateString('es-MX', {
                 day: '2-digit',
                 month: '2-digit',
                 year: 'numeric'
@@ -917,21 +917,21 @@ function loadGuests() {
             : '-';
         // Debug: Log creator info
         if (!pass.creator) {
-            console.warn('No creator data for pass:', pass.access_code, 'created_by:', pass.created_by);
+            console.warn('No creator data for pass:', pass.codigo_acceso, 'created_by:', pass.creado_por);
         }
 
-        const creatorName = pass.creator?.first_name || 'N/A';
-        const creatorRole = pass.creator?.role || 'unknown';
+        const creatorName = pass.creator?.nombre || 'N/A';
+        const creatorRole = pass.creator?.rol || 'unknown';
         const creatorLabel = creatorRole === 'groom' ? 'Novio' :
             creatorRole === 'bride' ? 'Novia' : 'Sin asignar';
 
         return `
-            <div class="guest-card" data-status="${status.class}" data-family="${pass.family_name.toLowerCase()}" data-id="${pass.id}" data-creator-role="${creatorRole}">
+            <div class="guest-card" data-status="${status.class}" data-family="${pass.nombre_familia.toLowerCase()}" data-id="${pass.id}" data-creator-role="${creatorRole}">
                 <!-- Header -->
                 <div class="guest-card-header">
                     <div class="guest-card-title">
-                        <h3>${pass.family_name}</h3>
-                        <code class="guest-code">${pass.access_code}</code>
+                        <h3>${pass.nombre_familia}</h3>
+                        <code class="guest-code">${pass.codigo_acceso}</code>
                     </div>
                     <span class="status-badge ${status.class}">${status.text}</span>
                 </div>
@@ -941,13 +941,13 @@ function loadGuests() {
                     <div class="info-row">
                         <div class="info-item">
                             <label>INVITADOS</label>
-                            <span class="info-value">${pass.total_guests} persona${pass.total_guests > 1 ? 's' : ''}</span>
+                            <span class="info-value">${pass.total_invitados} persona${pass.total_invitados > 1 ? 's' : ''}</span>
                         </div>
-                        
+
                         <div class="info-item">
                             <label>ENTRADA</label>
                             <span class="info-value">
-                                <strong>${pass.guests_entered}</strong> de ${pass.total_guests}
+                                <strong>${pass.invitados_ingresados}</strong> de ${pass.total_invitados}
                             </span>
                         </div>
 
@@ -971,37 +971,37 @@ function loadGuests() {
                 </div>
 
                 <!-- Actions -->
-                    <div class="guest-card-actions">
-                        ${getWhatsAppButton(pass, 'card')}
-                        <button class="btn-card edit" onclick="editPass('${pass.id}')" title="Editar invitación">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            Editar
-                        </button>
-                        <button class="btn-card delete" onclick="deletePass('${pass.id}')" title="Eliminar invitación">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                            </svg>
-                            Eliminar
-                        </button>
-                    </div>
+                <div class="guest-card-actions">
+                    ${getWhatsAppButton(pass, 'card')}
+                    <button class="btn-card edit" onclick="editPass('${pass.id}')" title="Editar invitación">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Editar
+                    </button>
+                    <button class="btn-card delete" onclick="deletePass('${pass.id}')" title="Eliminar invitación">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Eliminar
+                    </button>
+                </div>
             </div>
-        `;
+            `;
     }).join('');
 }
 
 // Determina el estado de un pase segun sus flags
 function getPassStatus(pass) {
-    if (pass.all_entered) {
+    if (pass.todos_ingresaron) {
         return { class: 'complete', text: 'Completo' };
     }
-    if (pass.guests_entered > 0) {
+    if (pass.invitados_ingresados > 0) {
         return { class: 'partial', text: 'Parcial' };
     }
-    if (pass.confirmed) {
+    if (pass.confirmado) {
         return { class: 'confirmed', text: 'Confirmado' };
     }
     return { class: 'pending', text: 'Pendiente' };
@@ -1097,11 +1097,11 @@ function showEmptyState(visibleCount) {
             emptyState = document.createElement('div');
             emptyState.className = 'filter-empty-state';
             emptyState.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">-</div>
-                    <h3>No se encontraron invitados</h3>
-                    <p>Intenta cambiar los filtros o realiza otra búsqueda</p>
-                </div>
+            <div class="empty-state">
+                <div class="empty-icon">-</div>
+                <h3>No se encontraron invitados</h3>
+                <p>Intenta cambiar los filtros o realiza otra búsqueda</p>
+            </div>
             `;
             container.appendChild(emptyState);
         }
@@ -1139,48 +1139,48 @@ function editPass(passId) {
         document.body.appendChild(modal);
     }
 
-    const tableNum = pass.tables?.table_number || '';
+    const tableNum = pass.mesas?.numero_mesa || '';
 
     modal.innerHTML = `
-        <div class="table-modal-overlay" onclick="closeEditModal()"></div>
-        <div class="table-modal-content">
-            <button class="table-modal-close" onclick="closeEditModal()">×</button>
-            <h2>Editar Pase</h2>
-            <p class="modal-subtitle">Código: <code>${pass.access_code}</code></p>
-            
-            <form id="edit-pass-form" class="edit-form">
-                <input type="hidden" id="edit-pass-id" value="${pass.id}">
-                <input type="hidden" id="edit-old-guests" value="${pass.total_guests}">
-                <input type="hidden" id="edit-old-table" value="${pass.table_id}">
-                
-                <div class="form-group">
-                    <label>Nombre de la Familia</label>
-                    <input type="text" id="edit-family" value="${pass.family_name}" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Número de Invitados</label>
-                    <input type="number" id="edit-guests" value="${pass.total_guests}" min="1" max="20" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Mesa</label>
-                    <select id="edit-table" required>
-                        ${tables.map(t => `
-                            <option value="${t.id}" ${t.id === pass.table_id ? 'selected' : ''}>
-                                Mesa ${t.table_number} (${t.capacity - t.occupied_seats} disponibles)
+            <div class="table-modal-overlay" onclick="closeEditModal()"></div>
+            <div class="table-modal-content">
+                <button class="table-modal-close" onclick="closeEditModal()">×</button>
+                <h2>Editar Pase</h2>
+                <p class="modal-subtitle">Código: <code>${pass.codigo_acceso}</code></p>
+
+                <form id="edit-pass-form" class="edit-form">
+                    <input type="hidden" id="edit-pass-id" value="${pass.id}">
+                        <input type="hidden" id="edit-old-guests" value="${pass.total_invitados}">
+                            <input type="hidden" id="edit-old-table" value="${pass.mesa_id}">
+
+                                <div class="form-group">
+                                    <label>Nombre de la Familia</label>
+                                    <input type="text" id="edit-family" value="${pass.nombre_familia}" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Número de Invitados</label>
+                                    <input type="number" id="edit-guests" value="${pass.total_invitados}" min="1" max="20" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Mesa</label>
+                                    <select id="edit-table" required>
+                                        ${tables.map(t => `
+                            <option value="${t.id}" ${t.id === pass.mesa_id ? 'selected' : ''}>
+                                Mesa ${t.numero_mesa} (${t.capacidad - t.asientos_ocupados} disponibles)
                             </option>
                         `).join('')}
-                    </select>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    `;
+                                    </select>
+                                </div>
+
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                </div>
+                            </form>
+                        </div>
+                        `;
 
     modal.classList.add('active');
 
@@ -1203,11 +1203,11 @@ async function savePassEdit(e) {
     try {
         // Update guest pass
         await supabase
-            .from('guest_passes')
+            .from('pases_invitados')
             .update({
-                family_name: newFamily,
-                total_guests: newGuests,
-                table_id: newTableId
+                nombre_familia: newFamily,
+                total_invitados: newGuests,
+                mesa_id: newTableId
             })
             .eq('id', passId);
 
@@ -1218,8 +1218,8 @@ async function savePassEdit(e) {
                 const oldTable = tables.find(t => t.id === oldTableId);
                 if (oldTable) {
                     await supabase
-                        .from('tables')
-                        .update({ occupied_seats: Math.max(0, oldTable.occupied_seats - oldGuests) })
+                        .from('mesas')
+                        .update({ asientos_ocupados: Math.max(0, oldTable.asientos_ocupados - oldGuests) })
                         .eq('id', oldTableId);
                 }
             }
@@ -1228,8 +1228,8 @@ async function savePassEdit(e) {
             const newTable = tables.find(t => t.id === newTableId);
             if (newTable) {
                 await supabase
-                    .from('tables')
-                    .update({ occupied_seats: newTable.occupied_seats + newGuests })
+                    .from('mesas')
+                    .update({ asientos_ocupados: newTable.asientos_ocupados + newGuests })
                     .eq('id', newTableId);
             }
         }
@@ -1262,21 +1262,21 @@ async function deletePass(passId) {
         const pass = passes.find(p => p.id === passId);
 
         // Update table seats
-        if (pass && pass.table_id) {
-            const table = tables.find(t => t.id === pass.table_id);
+        if (pass && pass.mesa_id) {
+            const table = tables.find(t => t.id === pass.mesa_id);
             if (table) {
                 await supabase
-                    .from('tables')
-                    .update({ occupied_seats: Math.max(0, table.occupied_seats - pass.total_guests) })
-                    .eq('id', pass.table_id);
+                    .from('mesas')
+                    .update({ asientos_ocupados: Math.max(0, table.asientos_ocupados - pass.total_invitados) })
+                    .eq('id', pass.mesa_id);
             }
         }
 
         // First delete entry logs to avoid foreign key constraints/persistence issues
-        await supabase.from('entry_logs').delete().eq('guest_pass_id', passId);
+        await supabase.from('registros_entrada').delete().eq('pase_id', passId);
 
         // Then delete the pass
-        await supabase.from('guest_passes').delete().eq('id', passId);
+        await supabase.from('pases_invitados').delete().eq('id', passId);
 
         showToast('Pase eliminado', 'success');
         await loadTables();
@@ -1296,9 +1296,9 @@ function showToast(message, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
-        <span class="toast-icon ${type}"></span>
-        <span>${message}</span>
-    `;
+                        <span class="toast-icon ${type}"></span>
+                        <span>${message}</span>
+                        `;
     container.appendChild(toast);
 
     setTimeout(() => toast.remove(), 4000);
@@ -1309,7 +1309,7 @@ function showToast(message, type = 'info') {
 // =============================================
 function showTableGuests(tableId, tableNumber) {
     // Find guests assigned to this table
-    const tableGuests = passes.filter(p => p.table_id === tableId);
+    const tableGuests = passes.filter(p => p.mesa_id === tableId);
 
     // Create or get modal
     let modal = document.getElementById('table-modal');
@@ -1332,32 +1332,32 @@ function showTableGuests(tableId, tableNumber) {
             return `
                         <div class="table-guest-item">
                             <div class="guest-info">
-                                <strong>${guest.family_name}</strong>
-                                <span class="guest-count">${guest.total_guests} persona${guest.total_guests > 1 ? 's' : ''}</span>
+                                <strong>${guest.nombre_familia}</strong>
+                                <span class="guest-count">${guest.total_invitados} persona${guest.total_invitados > 1 ? 's' : ''}</span>
                             </div>
                             <div class="guest-status">
                                 <span class="status-badge ${status.class}">${status.text}</span>
-                                <code>${guest.access_code}</code>
+                                <code>${guest.codigo_acceso}</code>
                             </div>
                         </div>
                     `;
         }).join('')}
             </div>
             <div class="table-summary">
-                <p>Total: <strong>${tableGuests.reduce((sum, g) => sum + g.total_guests, 0)}</strong> personas</p>
+                <p>Total: <strong>${tableGuests.reduce((sum, g) => sum + g.total_invitados, 0)}</strong> personas</p>
             </div>
         `;
     }
 
     modal.innerHTML = `
-        <div class="table-modal-overlay" onclick="closeTableModal()"></div>
-        <div class="table-modal-content">
-            <button class="table-modal-close" onclick="closeTableModal()">×</button>
-            <h2>Mesa ${tableNumber}</h2>
-            <p class="modal-subtitle">Invitados asignados</p>
-            ${guestListHTML}
-        </div>
-    `;
+                        <div class="table-modal-overlay" onclick="closeTableModal()"></div>
+                        <div class="table-modal-content">
+                            <button class="table-modal-close" onclick="closeTableModal()">×</button>
+                            <h2>Mesa ${tableNumber}</h2>
+                            <p class="modal-subtitle">Invitados asignados</p>
+                            ${guestListHTML}
+                        </div>
+                        `;
 
     modal.classList.add('active');
 }
@@ -1377,480 +1377,480 @@ function closeTableModal() {
 // =============================================
 const style = document.createElement('style');
 style.textContent = `
-    .dashboard-section {
-        display: none;
-    }
-    .dashboard-section.active {
-        display: block;
-    }
-    
-    .stat-card.clickable {
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    
-    .stat-card.clickable:hover {
-        border-color: var(--primary);
-        transform: translateY(-3px);
-        box-shadow: 0 5px 20px rgba(184, 134, 11, 0.3);
-    }
-    
-    .tables-visual-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 1rem;
-    }
-    
-    .table-item {
-        background: var(--surface-light);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 1rem;
-        text-align: center;
-    }
-    
-    .table-item.full {
-        border-color: var(--error);
-    }
-    
-    .table-item.partial {
-        border-color: var(--warning);
-    }
-    
-    .table-number {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-    
-    .table-occupancy {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .table-bar {
-        height: 4px;
-        background: var(--surface);
-        border-radius: 2px;
-        overflow: hidden;
-    }
-    
-    .table-bar-fill {
-        height: 100%;
-        background: var(--primary);
-        transition: width 0.3s ease;
-    }
-    
-    .filter-tabs {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-    }
-    
-    .filter-btn {
-        background: var(--surface-light);
-        border: 1px solid var(--border);
-        color: var(--text-muted);
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        cursor: pointer;
-        font-family: var(--font-body);
-        font-size: 0.9rem;
-        transition: all 0.3s ease;
-    }
-    
-    .filter-btn:hover,
-    .filter-btn.active {
-        background: var(--primary);
-        border-color: var(--primary);
-        color: var(--text);
-    }
-    
-    .search-input {
-        background: var(--surface-light);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 0.75rem 1rem;
-        color: var(--text);
-        font-family: var(--font-body);
-        width: 250px;
-    }
-    
-    .search-input:focus {
-        outline: none;
-        border-color: var(--primary);
-    }
-    
-    .attendance-chart {
-        padding: 1rem 0;
-    }
-    
-    .chart-bars {
-        display: flex;
-        justify-content: space-around;
-        align-items: flex-end;
-        height: 150px;
-        gap: 2rem;
-    }
-    
-    .chart-bar {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    
-    .bar-fill {
-        width: 60px;
-        border-radius: 5px 5px 0 0;
-        transition: height 0.5s ease;
-    }
-    
-    .bar-fill.pending { background: var(--warning); }
-    .bar-fill.confirmed { background: var(--success); }
-    .bar-fill.inside { background: var(--primary); }
-    
-    .bar-label {
-        color: var(--text-muted);
-        font-size: 0.85rem;
-    }
-    
-    .bar-value {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--text);
-    }
-    
-    code {
-        background: var(--surface-light);
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-family: 'Courier New', monospace;
-        color: var(--primary);
-    }
-    
-    .nav-logout {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1rem;
-        color: var(--error);
-        text-decoration: none;
-        border-radius: 10px;
-        transition: all 0.3s ease;
-        font-size: 0.95rem;
-        width: 100%;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        font-family: var(--font-body);
-        text-align: left;
-    }
-    
-    .nav-logout:hover {
-        background: rgba(231, 76, 60, 0.1);
-    }
-    
-    .nav-logout svg {
-        width: 20px;
-        height: 20px;
-    }
-    
-    /* Table Modal Styles */
-    .table-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-    
-    .table-modal.active {
-        opacity: 1;
-        visibility: visible;
-    }
-    
-    .table-modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        backdrop-filter: blur(5px);
-    }
-    
-    .table-modal-content {
-        position: relative;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        border-radius: 20px;
-        padding: 2rem;
-        width: 90%;
-        max-width: 450px;
-        max-height: 80vh;
-        overflow-y: auto;
-        transform: translateY(20px);
-        transition: transform 0.3s ease;
-    }
-    
-    .table-modal.active .table-modal-content {
-        transform: translateY(0);
-    }
-    
-    .table-modal-close {
-        position: absolute;
-        top: 1rem;
-        right: 1.5rem;
-        background: none;
-        border: none;
-        color: var(--text-muted);
-        font-size: 2rem;
-        cursor: pointer;
-        transition: color 0.3s ease;
-    }
-    
-    .table-modal-close:hover {
-        color: var(--error);
-    }
-    
-    .table-modal-content h2 {
-        font-family: var(--font-display);
-        font-size: 1.75rem;
-        margin-bottom: 0.25rem;
-        color: var(--primary);
-    }
-    
-    .modal-subtitle {
-        color: var(--text-muted);
-        margin-bottom: 1.5rem;
-    }
-    
-    .table-guest-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .table-guest-item {
-        background: var(--surface-light);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-    }
-    
-    .table-guest-item:hover {
-        border-color: var(--primary);
-    }
-    
-    .guest-info {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-    
-    .guest-info strong {
-        color: var(--text);
-    }
-    
-    .guest-count {
-        color: var(--text-muted);
-        font-size: 0.85rem;
-    }
-    
-    .guest-status {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0.5rem;
-    }
-    
-    .table-summary {
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border);
-        text-align: center;
-        color: var(--text-muted);
-    }
-    
-    .table-summary strong {
-        color: var(--primary);
-        font-size: 1.25rem;
-    }
-    
-    .no-guests {
-        text-align: center;
-        color: var(--text-muted);
-        padding: 2rem;
-        font-style: italic;
-    }
-    
-    .table-item:hover {
-        border-color: var(--primary);
-        transform: translateY(-2px);
-    }
-    
-    /* Action buttons */
-    .actions-cell {
-        display: flex;
-        gap: 0.5rem;
-        justify-content: center;
-        align-items: center;
-        white-space: nowrap;
-    }
-    
-    .btn-icon {
-        background: transparent;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 0.4rem 0.6rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 0.9rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 32px;
-        height: 32px;
-    }
-    
-    .btn-icon.edit:hover {
-        border-color: var(--primary);
-        background: rgba(184, 134, 11, 0.1);
-    }
-    
-    .btn-icon.delete:hover {
-        border-color: var(--error);
-        background: rgba(231, 76, 60, 0.1);
-    }
-    
-    /* Edit Form */
-    .edit-form {
-        display: flex;
-        flex-direction: column;
-        gap: 1.25rem;
-    }
-    
-    .edit-form .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .edit-form label {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-    
-    .edit-form input,
-    .edit-form select {
-        background: var(--surface-light);
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 0.875rem 1rem;
-        color: var(--text);
-        font-size: 1rem;
-        font-family: var(--font-body);
-    }
-    
-    .edit-form input:focus,
-    .edit-form select:focus {
-        outline: none;
-        border-color: var(--primary);
-    }
-    
-    .form-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        margin-top: 1rem;
-    }
-    
-    /* User greeting */
-    .user-greeting {
-        color: var(--primary);
-        font-size: 1.1rem;
-        font-weight: 500;
-    }
-    
-    .header-left {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-    
-    /* Creator badges */
-    .creator-badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-    
-    .creator-badge.groom {
-        background: rgba(52, 152, 219, 0.2);
-        color: #3498db;
-    }
-    
-    .creator-badge.bride {
-        background: rgba(155, 89, 182, 0.2);
-        color: #9b59b6;
-    }
-    
-    .creator-badge.unknown {
-        background: var(--surface-light);
-        color: var(--text-muted);
-    }
-    
-    /* Filters row */
-    .filters-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .creator-filter {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    
-    .creator-filter label {
-        color: var(--text-muted);
-        font-size: 0.9rem;
-    }
-    
-    .creator-filter select {
-        background: var(--surface-light);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        color: var(--text);
-        font-family: var(--font-body);
-        cursor: pointer;
-    }
-    
-    .creator-filter select:focus {
-        outline: none;
-        border-color: var(--primary);
-    }
-`;
+                        .dashboard-section {
+                            display: none;
+    }
+                        .dashboard-section.active {
+                            display: block;
+    }
+
+                        .stat-card.clickable {
+                            cursor: pointer;
+                        transition: all 0.3s ease;
+    }
+
+                        .stat-card.clickable:hover {
+                            border - color: var(--primary);
+                        transform: translateY(-3px);
+                        box-shadow: 0 5px 20px rgba(184, 134, 11, 0.3);
+    }
+
+                        .tables-visual-grid {
+                            display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                        gap: 1rem;
+    }
+
+                        .table-item {
+                            background: var(--surface-light);
+                        border: 1px solid var(--border);
+                        border-radius: 10px;
+                        padding: 1rem;
+                        text-align: center;
+    }
+
+                        .table-item.full {
+                            border - color: var(--error);
+    }
+
+                        .table-item.partial {
+                            border - color: var(--warning);
+    }
+
+                        .table-number {
+                            font - weight: 600;
+                        margin-bottom: 0.5rem;
+    }
+
+                        .table-occupancy {
+                            color: var(--text-muted);
+                        font-size: 0.9rem;
+                        margin-bottom: 0.5rem;
+    }
+
+                        .table-bar {
+                            height: 4px;
+                        background: var(--surface);
+                        border-radius: 2px;
+                        overflow: hidden;
+    }
+
+                        .table-bar-fill {
+                            height: 100%;
+                        background: var(--primary);
+                        transition: width 0.3s ease;
+    }
+
+                        .filter-tabs {
+                            display: flex;
+                        gap: 0.5rem;
+                        margin-bottom: 1.5rem;
+                        flex-wrap: wrap;
+    }
+
+                        .filter-btn {
+                            background: var(--surface-light);
+                        border: 1px solid var(--border);
+                        color: var(--text-muted);
+                        padding: 0.5rem 1rem;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-family: var(--font-body);
+                        font-size: 0.9rem;
+                        transition: all 0.3s ease;
+    }
+
+                        .filter-btn:hover,
+                        .filter-btn.active {
+                            background: var(--primary);
+                        border-color: var(--primary);
+                        color: var(--text);
+    }
+
+                        .search-input {
+                            background: var(--surface-light);
+                        border: 1px solid var(--border);
+                        border-radius: 10px;
+                        padding: 0.75rem 1rem;
+                        color: var(--text);
+                        font-family: var(--font-body);
+                        width: 250px;
+    }
+
+                        .search-input:focus {
+                            outline: none;
+                        border-color: var(--primary);
+    }
+
+                        .attendance-chart {
+                            padding: 1rem 0;
+    }
+
+                        .chart-bars {
+                            display: flex;
+                        justify-content: space-around;
+                        align-items: flex-end;
+                        height: 150px;
+                        gap: 2rem;
+    }
+
+                        .chart-bar {
+                            display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 0.5rem;
+    }
+
+                        .bar-fill {
+                            width: 60px;
+                        border-radius: 5px 5px 0 0;
+                        transition: height 0.5s ease;
+    }
+
+                        .bar-fill.pending {background: var(--warning); }
+                        .bar-fill.confirmed {background: var(--success); }
+                        .bar-fill.inside {background: var(--primary); }
+
+                        .bar-label {
+                            color: var(--text-muted);
+                        font-size: 0.85rem;
+    }
+
+                        .bar-value {
+                            font - size: 1.5rem;
+                        font-weight: 600;
+                        color: var(--text);
+    }
+
+                        code {
+                            background: var(--surface-light);
+                        padding: 0.25rem 0.5rem;
+                        border-radius: 4px;
+                        font-family: 'Courier New', monospace;
+                        color: var(--primary);
+    }
+
+                        .nav-logout {
+                            display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 1rem;
+                        color: var(--error);
+                        text-decoration: none;
+                        border-radius: 10px;
+                        transition: all 0.3s ease;
+                        font-size: 0.95rem;
+                        width: 100%;
+                        background: transparent;
+                        border: none;
+                        cursor: pointer;
+                        font-family: var(--font-body);
+                        text-align: left;
+    }
+
+                        .nav-logout:hover {
+                            background: rgba(231, 76, 60, 0.1);
+    }
+
+                        .nav-logout svg {
+                            width: 20px;
+                        height: 20px;
+    }
+
+                        /* Table Modal Styles */
+                        .table-modal {
+                            position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        z-index: 1000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        opacity: 0;
+                        visibility: hidden;
+                        transition: all 0.3s ease;
+    }
+
+                        .table-modal.active {
+                            opacity: 1;
+                        visibility: visible;
+    }
+
+                        .table-modal-overlay {
+                            position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.7);
+                        backdrop-filter: blur(5px);
+    }
+
+                        .table-modal-content {
+                            position: relative;
+                        background: var(--surface);
+                        border: 1px solid var(--border);
+                        border-radius: 20px;
+                        padding: 2rem;
+                        width: 90%;
+                        max-width: 450px;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        transform: translateY(20px);
+                        transition: transform 0.3s ease;
+    }
+
+                        .table-modal.active .table-modal-content {
+                            transform: translateY(0);
+    }
+
+                        .table-modal-close {
+                            position: absolute;
+                        top: 1rem;
+                        right: 1.5rem;
+                        background: none;
+                        border: none;
+                        color: var(--text-muted);
+                        font-size: 2rem;
+                        cursor: pointer;
+                        transition: color 0.3s ease;
+    }
+
+                        .table-modal-close:hover {
+                            color: var(--error);
+    }
+
+                        .table-modal-content h2 {
+                            font - family: var(--font-display);
+                        font-size: 1.75rem;
+                        margin-bottom: 0.25rem;
+                        color: var(--primary);
+    }
+
+                        .modal-subtitle {
+                            color: var(--text-muted);
+                        margin-bottom: 1.5rem;
+    }
+
+                        .table-guest-list {
+                            display: flex;
+                        flex-direction: column;
+                        gap: 1rem;
+    }
+
+                        .table-guest-item {
+                            background: var(--surface-light);
+                        border: 1px solid var(--border);
+                        border-radius: 12px;
+                        padding: 1rem;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        gap: 1rem;
+    }
+
+                        .table-guest-item:hover {
+                            border - color: var(--primary);
+    }
+
+                        .guest-info {
+                            display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+    }
+
+                        .guest-info strong {
+                            color: var(--text);
+    }
+
+                        .guest-count {
+                            color: var(--text-muted);
+                        font-size: 0.85rem;
+    }
+
+                        .guest-status {
+                            display: flex;
+                        flex-direction: column;
+                        align-items: flex-end;
+                        gap: 0.5rem;
+    }
+
+                        .table-summary {
+                            margin - top: 1.5rem;
+                        padding-top: 1rem;
+                        border-top: 1px solid var(--border);
+                        text-align: center;
+                        color: var(--text-muted);
+    }
+
+                        .table-summary strong {
+                            color: var(--primary);
+                        font-size: 1.25rem;
+    }
+
+                        .no-guests {
+                            text - align: center;
+                        color: var(--text-muted);
+                        padding: 2rem;
+                        font-style: italic;
+    }
+
+                        .table-item:hover {
+                            border - color: var(--primary);
+                        transform: translateY(-2px);
+    }
+
+                        /* Action buttons */
+                        .actions-cell {
+                            display: flex;
+                        gap: 0.5rem;
+                        justify-content: center;
+                        align-items: center;
+                        white-space: nowrap;
+    }
+
+                        .btn-icon {
+                            background: transparent;
+                        border: 1px solid var(--border);
+                        border-radius: 8px;
+                        padding: 0.4rem 0.6rem;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        font-size: 0.9rem;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-width: 32px;
+                        height: 32px;
+    }
+
+                        .btn-icon.edit:hover {
+                            border - color: var(--primary);
+                        background: rgba(184, 134, 11, 0.1);
+    }
+
+                        .btn-icon.delete:hover {
+                            border - color: var(--error);
+                        background: rgba(231, 76, 60, 0.1);
+    }
+
+                        /* Edit Form */
+                        .edit-form {
+                            display: flex;
+                        flex-direction: column;
+                        gap: 1.25rem;
+    }
+
+                        .edit-form .form-group {
+                            display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+    }
+
+                        .edit-form label {
+                            color: var(--text-muted);
+                        font-size: 0.9rem;
+    }
+
+                        .edit-form input,
+                        .edit-form select {
+                            background: var(--surface-light);
+                        border: 1px solid var(--border);
+                        border-radius: 10px;
+                        padding: 0.875rem 1rem;
+                        color: var(--text);
+                        font-size: 1rem;
+                        font-family: var(--font-body);
+    }
+
+                        .edit-form input:focus,
+                        .edit-form select:focus {
+                            outline: none;
+                        border-color: var(--primary);
+    }
+
+                        .form-actions {
+                            display: flex;
+                        gap: 1rem;
+                        justify-content: flex-end;
+                        margin-top: 1rem;
+    }
+
+                        /* User greeting */
+                        .user-greeting {
+                            color: var(--primary);
+                        font-size: 1.1rem;
+                        font-weight: 500;
+    }
+
+                        .header-left {
+                            display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+    }
+
+                        /* Creator badges */
+                        .creator-badge {
+                            display: inline-block;
+                        padding: 0.25rem 0.75rem;
+                        border-radius: 15px;
+                        font-size: 0.8rem;
+                        font-weight: 500;
+    }
+
+                        .creator-badge.groom {
+                            background: rgba(52, 152, 219, 0.2);
+                        color: #3498db;
+    }
+
+                        .creator-badge.bride {
+                            background: rgba(155, 89, 182, 0.2);
+                        color: #9b59b6;
+    }
+
+                        .creator-badge.unknown {
+                            background: var(--surface-light);
+                        color: var(--text-muted);
+    }
+
+                        /* Filters row */
+                        .filters-row {
+                            display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        flex-wrap: wrap;
+                        gap: 1rem;
+                        margin-bottom: 1.5rem;
+    }
+
+                        .creator-filter {
+                            display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+    }
+
+                        .creator-filter label {
+                            color: var(--text-muted);
+                        font-size: 0.9rem;
+    }
+
+                        .creator-filter select {
+                            background: var(--surface-light);
+                        border: 1px solid var(--border);
+                        border-radius: 8px;
+                        padding: 0.5rem 1rem;
+                        color: var(--text);
+                        font-family: var(--font-body);
+                        cursor: pointer;
+    }
+
+                        .creator-filter select:focus {
+                            outline: none;
+                        border-color: var(--primary);
+    }
+                        `;
 document.head.appendChild(style);
 
 // =============================================
@@ -1858,16 +1858,16 @@ document.head.appendChild(style);
 // =============================================
 function loadLiveMonitor() {
     // Filter passes that have entered guests
-    const activePasses = passes.filter(p => p.guests_entered > 0);
+    const activePasses = passes.filter(p => p.invitados_ingresados > 0);
 
     // Sort by most recent update (approximate entry time)
     // Sort by most recent update (approximate entry time)
     activePasses.sort((a, b) => {
-        // Use entry_logs if available for sorting
+        // Use registos_entrada if available for sorting
         const getLatestLog = (p) => {
-            if (p.entry_logs && p.entry_logs.length > 0) {
-                return p.entry_logs.reduce((latest, log) => {
-                    const d = new Date(log.entered_at);
+            if (p.registros_entrada && p.registros_entrada.length > 0) {
+                return p.registros_entrada.reduce((latest, log) => {
+                    const d = new Date(log.ingreso_en);
                     return d > latest ? d : latest;
                 }, new Date(0));
             }
@@ -1879,7 +1879,7 @@ function loadLiveMonitor() {
 
     // Update stats
     // Update stats
-    const totalInside = passes.reduce((sum, p) => sum + p.guests_entered, 0);
+    const totalInside = passes.reduce((sum, p) => sum + p.invitados_ingresados, 0);
     const totalEl = document.getElementById('live-total-inside');
     const familiesEl = document.getElementById('live-families-inside');
 
@@ -1896,15 +1896,15 @@ function loadLiveMonitor() {
     }
 
     tbody.innerHTML = activePasses.map(pass => {
-        const tableNum = pass.tables?.table_number || '-';
-        const isComplete = pass.guests_entered >= pass.total_guests;
+        const tableNum = pass.mesas?.numero_mesa || '-';
+        const isComplete = pass.invitados_ingresados >= pass.total_invitados;
 
         // Find latest entry time from logs
         let lastEntryTime = null;
-        if (pass.entry_logs && pass.entry_logs.length > 0) {
+        if (pass.registros_entrada && pass.registros_entrada.length > 0) {
             // Sort to find newest
-            const sortedLogs = pass.entry_logs.sort((a, b) => new Date(b.entered_at) - new Date(a.entered_at));
-            lastEntryTime = sortedLogs[0].entered_at;
+            const sortedLogs = pass.registros_entrada.sort((a, b) => new Date(b.ingreso_en) - new Date(a.ingreso_en));
+            lastEntryTime = sortedLogs[0].ingreso_en;
         }
 
         const time = lastEntryTime
@@ -1912,14 +1912,14 @@ function loadLiveMonitor() {
             : '--:--';
 
         return `
-            <tr>
-                <td data-label="Familia">${pass.family_name}</td>
-                <td data-label="Mesa"><span>Mesa ${tableNum}</span></td>
-                <td data-label="Entrada"><span><strong>${pass.guests_entered}</strong> / ${pass.total_guests}</span></td>
-                <td data-label="Hora"><span>~ ${time}</span></td>
-                <td data-label="Estatus"><span class="status-badge ${isComplete ? 'complete' : 'partial'}">${isComplete ? 'Completo' : 'Parcial'}</span></td>
-            </tr>
-        `;
+                        <tr>
+                            <td data-label="Familia">${pass.nombre_familia}</td>
+                            <td data-label="Mesa"><span>Mesa ${tableNum}</span></td>
+                            <td data-label="Entrada"><span><strong>${pass.invitados_ingresados}</strong> / ${pass.total_invitados}</span></td>
+                            <td data-label="Hora"><span>~ ${time}</span></td>
+                            <td data-label="Estatus"><span class="status-badge ${isComplete ? 'complete' : 'partial'}">${isComplete ? 'Completo' : 'Parcial'}</span></td>
+                        </tr>
+                        `;
     }).join('');
 }
 
@@ -1932,7 +1932,7 @@ function initRealtime() {
 
     supabase.channel('admin_dashboard')
         .on('postgres_changes',
-            { event: '*', schema: 'public', table: 'guest_passes' },
+            { event: '*', schema: 'public', table: 'pases_invitados' },
             payload => {
                 console.log('Realtime change:', payload);
                 loadPasses().then(() => {
@@ -1951,37 +1951,37 @@ function initRealtime() {
 // para enviar la invitacion por WhatsApp
 // =============================================
 function getWhatsAppButton(pass, type = 'card') {
-    if (!pass.phone) return '';
+    if (!pass.telefono) return '';
 
-    const message = `Hola *${pass.family_name}*, nos da mucha alegría invitarlos a nuestra boda.
+    const message = `Hola *${pass.nombre_familia}*, nos da mucha alegría invitarlos a nuestra boda.
 
-Para ver los detalles y *confirmar su asistencia*, por favor ingresa a esta página web:
-https://boda-abi-lupita.vercel.app/
+                        Para ver los detalles y *confirmar su asistencia*, por favor ingresa a esta página web:
+                        https://boda-abi-lupita.vercel.app/
 
-Su código de acceso es:
-*${pass.access_code}*
+                        Su código de acceso es:
+                        *${pass.codigo_acceso}*
 
-¡Esperamos contar con su presencia!`;
+                        ¡Esperamos contar con su presencia!`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/52${pass.phone.replace(/\D/g, '')}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/52${pass.telefono.replace(/\D/g, '')}?text=${encodedMessage}`;
 
     if (type === 'compact') {
         return `
-            <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp-compact" title="Enviar por WhatsApp">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
-            </a>
-        `;
+                        <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp-compact" title="Enviar por WhatsApp">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                        </a>
+                        `;
     } else {
         return `
-            <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp" title="Enviar invitación">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
-                WhatsApp
-            </a>
-        `;
+                        <a href="${whatsappUrl}" target="_blank" class="btn-whatsapp" title="Enviar invitación">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                            WhatsApp
+                        </a>
+                        `;
     }
 }
