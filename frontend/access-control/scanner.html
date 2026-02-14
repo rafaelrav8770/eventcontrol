@@ -1,0 +1,132 @@
+<!-- access-control/scanner.html — Escaner QR para control de acceso
+     Panel izquierdo: scanner + info del invitado.
+     Panel derecho: stats en vivo + log de entradas. -->
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escáner - Control de Acceso</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/access.css">
+    <!-- Libreria de scanner QR -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+
+<body>
+    <div class="scanner-container">
+        <!-- Encabezado -->
+        <header class="scanner-header">
+            <h1>Control de Acceso</h1>
+            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        </header>
+
+        <!-- Grid principal del scanner -->
+        <div class="scanner-grid">
+            <!-- Panel izquierdo: Scanner QR -->
+            <div class="scanner-panel">
+                <h2 class="panel-title">Escanear QR</h2>
+
+                <div class="scanner-view">
+                    <div id="qr-reader"></div>
+                </div>
+
+                <div class="manual-input">
+                    <input type="text" id="manual-code" placeholder="XXXX" maxlength="4" autocomplete="off">
+                    <button onclick="searchByCode()">Buscar</button>
+                </div>
+
+                <!-- Info del invitado (aparece despues de escanear) -->
+                <div id="guest-info" class="guest-info">
+                    <div class="info-header">
+                        <div class="family-name" id="info-family">Familia García</div>
+                        <div class="code" id="info-code">A3X7</div>
+                    </div>
+
+                    <div class="info-details">
+                        <div class="detail-item">
+                            <div class="value" id="info-total">5</div>
+                            <div class="label">Total Invitados</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="value" id="info-inside">2</div>
+                            <div class="label">Ya Dentro</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="value" id="info-remaining">3</div>
+                            <div class="label">Por Llegar</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="value" id="info-table">3</div>
+                            <div class="label">Mesa</div>
+                        </div>
+                    </div>
+
+                    <div class="entry-form">
+                        <label for="entering-count">¿Cuántos entran ahora?</label>
+                        <input type="number" id="entering-count" min="1" value="1">
+                        <div class="entry-buttons">
+                            <button class="btn-cancel" onclick="cancelEntry()">Cancelar</button>
+                            <button class="btn-confirm" onclick="confirmEntry()">Confirmar Entrada</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estado cuando no hay invitado escaneado -->
+                <div id="no-guest" class="no-guest">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                        </path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <p>Escanea un código QR o ingresa el código manualmente</p>
+                </div>
+            </div>
+
+            <!-- Panel derecho: Stats y lista de entradas -->
+            <div class="scanner-panel">
+                <h2 class="panel-title">Estado en Tiempo Real</h2>
+
+                <div class="stats-list">
+                    <div class="stat-item">
+                        <span class="label">Total Esperados</span>
+                        <span class="value primary" id="stat-expected">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Ya Dentro</span>
+                        <span class="value success" id="stat-inside">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="label">Por Llegar</span>
+                        <span class="value warning" id="stat-pending">0</span>
+                    </div>
+                </div>
+
+                <h3 class="panel-title" style="font-size: 1rem; margin-top: 1rem;">Últimas Entradas</h3>
+                <div id="entry-log" class="entry-log">
+                    <!-- Entry logs will appear here -->
+                </div>
+
+                <h3 class="panel-title" style="font-size: 1rem; margin-top: 1.5rem;">Pendientes por Llegar</h3>
+                <div id="pending-list" class="pending-list">
+                    <!-- Pending families will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de notificaciones toast -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase-config.js"></script>
+    <script src="js/scanner.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,49 @@
+// ============================================
+// test-keep-alive.js — Script de prueba
+// Corre esto manualmente para verificar que la
+// conexion a Supabase sigue viva
+// Uso: node backend/scripts/test-keep-alive.js
+// ============================================
+
+// Credenciales — usamos la REST API directo (sin el SDK)
+const SUPABASE_URL = 'https://pwrixdojbrmtwyfmygys.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cml4ZG9qYnJtdHd5Zm15Z3lzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY2MTkyNTQsImV4cCI6MjA4MjE5NTI1NH0.xR7kmjDRiECOu7usPyzNKcg-dtIQCRNdnuI49Sl799U';
+
+async function testKeepAlive() {
+    console.log('🔍 Probando conexión keep-alive a Supabase...\n');
+
+    try {
+        // Hacemos un HEAD request a la REST API — basicamente preguntamos
+        // "cuantas invitaciones hay?" sin descargar datos
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/guest_passes?select=id&limit=1`, {
+            method: 'HEAD',
+            headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Prefer': 'count=exact'
+            }
+        });
+
+        if (!response.ok) {
+            console.error('❌ Error HTTP:', response.status, response.statusText);
+            process.exit(1);
+        }
+
+        // El total viene en el header content-range (ej: "0-0/42")
+        const count = response.headers.get('content-range')?.split('/')[1] || '0';
+
+        console.log('✅ ÉXITO - Ping keep-alive de Supabase completado');
+        console.log(`📊 Invitaciones en DB: ${count}`);
+        console.log(`⏰ Timestamp: ${new Date().toISOString()}`);
+        console.log(`🔄 Próximo ping recomendado: ${new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString()}\n`);
+
+        process.exit(0);
+
+    } catch (error) {
+        console.error('❌ Error general:', error.message);
+        process.exit(1);
+    }
+}
+
+// Arrancamos
+testKeepAlive();
