@@ -130,75 +130,202 @@ EVENT-CONTROL/
 
 ---
 
-## 🗄️ 5. MODELO DE BASE DE DATOS
+## 🗄️ 5. MODELO DE BASE DE DATOS (UML)
 
-### Diagrama Entidad-Relación
+### 5.1 Diagrama de Clases (Entidades de la Base de Datos)
 
+```mermaid
+classDiagram
+    class configuracion_evento {
+        +UUID id CP
+        +ENTERO total_mesas
+        +ENTERO asientos_por_mesa
+        +FECHA fecha_evento
+        +HORA hora_evento
+        +TEXTO nombre_lugar
+        +TEXTO direccion_lugar
+        +TIMESTAMP creado_en
+        +TIMESTAMP actualizado_en
+    }
+
+    class mesas {
+        +UUID id CP
+        +ENTERO numero_mesa
+        +ENTERO capacidad
+        +ENTERO asientos_ocupados
+        +TIMESTAMP creado_en
+    }
+
+    class pases_invitados {
+        +UUID id CP
+        +VARCHAR codigo_acceso UNICO
+        +TEXTO nombre_familia
+        +ENTERO total_invitados
+        +ENTERO invitados_ingresados
+        +UUID mesa_id CE
+        +VARCHAR telefono
+        +BOOLEANO confirmado
+        +TIMESTAMP confirmado_en
+        +BOOLEANO todos_ingresaron
+        +UUID creado_por CE
+        +TIMESTAMP creado_en
+        +TIMESTAMP actualizado_en
+    }
+
+    class registros_entrada {
+        +UUID id CP
+        +UUID pase_id CE
+        +ENTERO cantidad_invitados
+        +TIMESTAMP ingreso_en
+        +UUID registrado_por CE
+    }
+
+    class descargas_invitacion {
+        +UUID id CP
+        +UUID pase_id CE
+        +TIMESTAMP descargado_en
+        +TEXTO direccion_ip
+    }
+
+    class perfiles_usuario {
+        +UUID id CP CE
+        +TEXTO correo
+        +TEXTO nombre
+        +TEXTO rol
+        +TIMESTAMP creado_en
+    }
+
+    class usuarios_auth {
+        +UUID id CP
+        +TEXTO correo
+        +TEXTO contraseña_cifrada
+    }
+
+    usuarios_auth "1" --> "1" perfiles_usuario : id
+    mesas "1" --> "0..*" pases_invitados : mesa_id
+    usuarios_auth "1" --> "0..*" pases_invitados : creado_por
+    pases_invitados "1" --> "0..*" registros_entrada : pase_id
+    usuarios_auth "1" --> "0..*" registros_entrada : registrado_por
+    pases_invitados "1" --> "0..*" descargas_invitacion : pase_id
 ```
-┌─────────────────┐       ┌─────────────────┐
-│   auth.users    │       │  user_profiles  │
-├─────────────────┤       ├─────────────────┤
-│ id (PK)         │◄──────│ id (PK, FK)     │
-│ email           │       │ email           │
-│ ...             │       │ first_name      │
-└─────────────────┘       │ role            │
-                          │ created_at      │
-                          └─────────────────┘
-                                  │
-                                  │ created_by
-                                  ▼
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│     tables      │       │  guest_passes   │       │   entry_logs    │
-├─────────────────┤       ├─────────────────┤       ├─────────────────┤
-│ id (PK)         │◄──────│ id (PK)         │◄──────│ id (PK)         │
-│ table_number    │       │ access_code     │       │ pass_id (FK)    │
-│ capacity        │       │ family_name     │       │ guests_count    │
-│ occupied_seats  │       │ total_guests    │       │ entered_at      │
-│ created_at      │       │ guests_entered  │       │ registered_by   │
-└─────────────────┘       │ table_id (FK)   │       └─────────────────┘
-                          │ phone           │
-                          │ confirmed       │
-                          │ confirmed_at    │
-                          │ all_entered     │
-                          │ created_by (FK) │
-                          │ created_at      │
-                          └─────────────────┘
-                                  │
-                                  ▼
-                          ┌─────────────────────┐
-                          │invitation_downloads │
-                          ├─────────────────────┤
-                          │ id (PK)             │
-                          │ pass_id (FK)        │
-                          │ downloaded_at       │
-                          │ ip_address          │
-                          └─────────────────────┘
 
-┌─────────────────┐
-│  event_config   │
-├─────────────────┤
-│ id (PK)         │
-│ total_tables    │
-│ seats_per_table │
-│ event_date      │
-│ event_time      │
-│ venue_name      │
-│ venue_address   │
-│ created_at      │
-│ updated_at      │
-└─────────────────┘
+> **Leyenda:** CP = Clave Primaria | CE = Clave Extranjera | UNICO = Restricción de unicidad
+
+### 5.2 Diagrama de Componentes (Arquitectura)
+
+```mermaid
+graph TB
+    subgraph "🖥️ Interfaz - Cliente Web"
+        A["📄 index.html<br/>Invitación Digital"]
+        B["📄 confirmar/<br/>Confirmación RSVP"]
+        C["📄 admin/<br/>Panel Administración"]
+        D["📄 control-acceso/<br/>Escáner QR"]
+    end
+
+    subgraph "📦 Módulos JavaScript"
+        E["principal.js"]
+        F["cuenta-regresiva.js"]
+        G["galeria.js"]
+        H["config-supabase.js"]
+        I["autenticacion.js"]
+        J["panel-control.js"]
+        K["confirmacion.js"]
+        L["escaner.js"]
+    end
+
+    subgraph "☁️ Supabase - Backend como Servicio"
+        M["🔐 Autenticación"]
+        N["🗄️ PostgreSQL"]
+        O["🔒 Seguridad por Fila RLS"]
+        P["📡 Tiempo Real"]
+    end
+
+    subgraph "🌐 APIs Externas"
+        Q["Google Maps"]
+        R["API WhatsApp"]
+    end
+
+    A --> E & F & G & H
+    B --> K & H
+    C --> I & J & H
+    D --> L & H
+
+    H --> M & N & P
+    N --> O
+    A --> Q
+    E --> R
+```
+
+### 5.3 Diagrama de Casos de Uso
+
+```mermaid
+graph LR
+    subgraph "Actores"
+        INV["👤 Invitado"]
+        ADM["👔 Administrador<br/>(Novio/Novia)"]
+        ACC["🔐 Personal de<br/>Control de Acceso"]
+    end
+
+    subgraph "Sistema EVENT-CONTROL"
+        UC1["Ver Invitación"]
+        UC2["Confirmar Asistencia"]
+        UC3["Descargar Pase QR"]
+        UC4["Iniciar Sesión"]
+        UC5["Gestionar Mesas"]
+        UC6["Crear Pases"]
+        UC7["Ver Panel de Control"]
+        UC8["Exportar Datos"]
+        UC9["Escanear Código QR"]
+        UC10["Registrar Entrada"]
+        UC11["Ver Estadísticas"]
+    end
+
+    INV --> UC1 & UC2 & UC3
+    ADM --> UC4 & UC5 & UC6 & UC7 & UC8
+    ACC --> UC4 & UC9 & UC10 & UC11
+```
+
+### 5.4 Diagrama de Secuencia - Flujo de Confirmación
+
+```mermaid
+sequenceDiagram
+    actor I as 👤 Invitado
+    participant W as 🌐 Página de Confirmación
+    participant S as ☁️ Supabase
+    participant BD as 🗄️ Base de Datos
+
+    I->>W: Ingresa código de acceso (ej: AB12)
+    W->>S: CONSULTA pases_invitados DONDE codigo='AB12'
+    S->>BD: Consulta SQL
+    BD-->>S: Datos del pase
+    S-->>W: Resultado
+    W-->>I: Muestra información del pase
+
+    I->>W: Clic en "Confirmar Asistencia"
+    W->>S: ACTUALIZA pases_invitados confirmado=verdadero
+    S->>BD: Actualización
+    BD-->>S: Éxito
+    S-->>W: Confirmado
+
+    W->>W: Genera código QR
+    W-->>I: Muestra pase descargable (PNG)
+
+    I->>W: Clic en "Descargar Pase"
+    W->>S: INSERTA EN descargas_invitacion
+    S->>BD: Registra descarga
+    W-->>I: Descarga pase con QR
 ```
 
 ### Tablas Principales
 
 | Tabla | Descripción | Campos Clave |
 |-------|-------------|--------------|
-| `event_config` | Configuración del evento | fecha, hora, ubicación |
-| `tables` | Mesas del evento | número, capacidad, ocupados |
-| `guest_passes` | Pases de invitados | código, familia, confirmación |
-| `entry_logs` | Registros de entrada | pase, cantidad, hora |
-| `user_profiles` | Perfiles de administradores | rol (groom/bride/access) |
-| `invitation_downloads` | Estadísticas de descargas | pase, fecha, IP |
+| `configuracion_evento` | Configuración del evento | fecha, hora, ubicación |
+| `mesas` | Mesas del evento | número, capacidad, ocupados |
+| `pases_invitados` | Pases de invitados | código, familia, confirmación |
+| `registros_entrada` | Registros de entrada | pase, cantidad, hora |
+| `perfiles_usuario` | Perfiles de administradores | rol (novio/novia/acceso) |
+| `descargas_invitacion` | Estadísticas de descargas | pase, fecha, IP |
 
 ---
 

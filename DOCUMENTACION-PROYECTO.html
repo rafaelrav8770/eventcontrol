@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación Técnica - EVENT-CONTROL</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.7;
+            color: #1a1a2e;
+            background: #f8f9fa;
+            padding: 40px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding-bottom: 40px;
+            border-bottom: 3px solid #667eea;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.2em;
+            color: #1a1a2e;
+            margin-bottom: 10px;
+        }
+        
+        .header .subtitle {
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .header .meta {
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.95em;
+        }
+        
+        .header .meta span {
+            display: inline-block;
+            margin: 0 15px;
+        }
+        
+        /* Sections */
+        h2 {
+            font-size: 1.5em;
+            color: #667eea;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e8ecf4;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h2 .emoji {
+            font-size: 1.2em;
+        }
+        
+        h3 {
+            font-size: 1.15em;
+            color: #333;
+            margin: 25px 0 12px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            color: #444;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin: 15px 0 15px 25px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+            color: #444;
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #e8ecf4;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fc;
+        }
+        
+        /* Code blocks */
+        pre {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+            line-height: 1.5;
+            margin: 20px 0;
+        }
+        
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #e8ecf4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #667eea;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        
+        /* Feature boxes */
+        .feature-box {
+            background: linear-gradient(135deg, #f8f9fc 0%, #e8ecf4 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .feature-box h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        /* Check marks */
+        .check {
+            color: #10b981;
+            font-weight: bold;
+        }
+        
+        /* Architecture diagram */
+        .diagram {
+            background: #1e1e2e;
+            color: #89b4fa;
+            padding: 25px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8em;
+            white-space: pre;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        /* Info cards */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .info-card {
+            background: #f8f9fc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e8ecf4;
+        }
+        
+        .info-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 2px solid #e8ecf4;
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                padding: 0;
+                background: white;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            
+            pre, .diagram {
+                break-inside: avoid;
+            }
+            
+            h2 {
+                break-after: avoid;
+            }
+            
+            .no-print {
+                display: none;
+            }
+        }
+        
+        /* Print button */
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s;
+        }
+        
+        .print-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">📥 Guardar como PDF</button>
+    
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>📋 DOCUMENTACIÓN TÉCNICA DEL PROYECTO</h1>
+            <div class="subtitle">Sistema de Control de Eventos - EVENT-CONTROL</div>
+            <div class="meta">
+                <span><strong>Repositorio:</strong> github.com/rafaelrav8770/EVENT-CONTROL</span>
+                <span><strong>Fecha:</strong> 6 de Febrero de 2026</span>
+                <span><strong>Versión:</strong> 1.0.0</span>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 1 -->
+        <h2><span class="emoji">📌</span> 1. DESCRIPCIÓN DEL PROYECTO</h2>
+        <p>Sistema web completo para la <strong>gestión de invitaciones y control de acceso</strong> a eventos (bodas, fiestas, conferencias). Permite:</p>
+        <ul>
+            <li><span class="check">✅</span> Invitación digital personalizada con cuenta regresiva</li>
+            <li><span class="check">✅</span> Generación de pases con códigos QR únicos</li>
+            <li><span class="check">✅</span> Confirmación de asistencia en línea</li>
+            <li><span class="check">✅</span> Panel de administración para gestión de invitados</li>
+            <li><span class="check">✅</span> Control de acceso en tiempo real con escaneo QR</li>
+            <li><span class="check">✅</span> Monitoreo en vivo de entradas al evento</li>
+        </ul>
+
+        <!-- SECCIÓN 2 -->
+        <h2><span class="emoji">🏗️</span> 2. ARQUITECTURA DEL SISTEMA</h2>
+        <div class="diagram">┌─────────────────────────────────────────────────────────────────┐
+│                        FRONTEND (Cliente)                        │
+├─────────────┬─────────────┬──────────────┬─────────────────────┤
+│  index.html │ confirm/    │   admin/     │   access-control/   │
+│  Invitación │ Confirmación│   Dashboard  │   Escáner QR        │
+└──────┬──────┴──────┬──────┴──────┬───────┴──────────┬──────────┘
+       │             │             │                  │
+       └─────────────┴─────────────┴──────────────────┘
+                              │
+                    ┌─────────▼─────────┐
+                    │   Supabase SDK    │
+                    │   (JavaScript)    │
+                    └─────────┬─────────┘
+                              │
+              ┌───────────────▼───────────────┐
+              │         SUPABASE (BaaS)       │
+              ├───────────────────────────────┤
+              │  • PostgreSQL Database        │
+              │  • Authentication (Auth)      │
+              │  • Row Level Security (RLS)   │
+              │  • Realtime Subscriptions     │
+              └───────────────────────────────┘</div>
+
+        <!-- SECCIÓN 3 -->
+        <h2><span class="emoji">🛠️</span> 3. TECNOLOGÍAS UTILIZADAS</h2>
+        
+        <h3>Frontend</h3>
+        <table>
+            <tr><th>Tecnología</th><th>Versión</th><th>Uso</th></tr>
+            <tr><td>HTML5</td><td>-</td><td>Estructura de páginas</td></tr>
+            <tr><td>CSS3</td><td>-</td><td>Estilos y animaciones</td></tr>
+            <tr><td>JavaScript ES6+</td><td>-</td><td>Lógica del cliente</td></tr>
+            <tr><td>Google Fonts</td><td>-</td><td>Tipografías (Cormorant Garamond, Great Vibes, Montserrat)</td></tr>
+        </table>
+        
+        <h3>Backend (BaaS)</h3>
+        <table>
+            <tr><th>Tecnología</th><th>Versión</th><th>Uso</th></tr>
+            <tr><td>Supabase</td><td>2.39.0</td><td>Backend as a Service</td></tr>
+            <tr><td>PostgreSQL</td><td>15+</td><td>Base de datos relacional</td></tr>
+            <tr><td>Supabase Auth</td><td>-</td><td>Autenticación de usuarios</td></tr>
+            <tr><td>Supabase Realtime</td><td>-</td><td>Actualizaciones en tiempo real</td></tr>
+        </table>
+        
+        <h3>Herramientas</h3>
+        <table>
+            <tr><th>Herramienta</th><th>Uso</th></tr>
+            <tr><td>Git</td><td>Control de versiones</td></tr>
+            <tr><td>GitHub</td><td>Repositorio remoto</td></tr>
+            <tr><td>Python http.server</td><td>Servidor de desarrollo local</td></tr>
+        </table>
+
+        <!-- SECCIÓN 4 -->
+        <h2><span class="emoji">📁</span> 4. ESTRUCTURA DE ARCHIVOS</h2>
+        <pre>EVENT-CONTROL/
+│
+├── 📄 index.html                    # Página principal de invitación
+├── 📄 config.json                   # Configuración del evento
+├── 📄 package.json                  # Dependencias del proyecto
+│
+├── 📁 css/
+│   └── styles.css                   # Estilos globales
+│
+├── 📁 js/
+│   ├── main.js                      # Script principal
+│   ├── countdown.js                 # Cuenta regresiva
+│   ├── gallery.js                   # Galería de fotos
+│   └── supabase-config.js           # Configuración Supabase
+│
+├── 📁 admin/                        # Panel de administración
+│   ├── index.html                   # Login admin
+│   ├── dashboard.html               # Panel de control
+│   ├── css/admin.css                # Estilos admin
+│   └── js/
+│       ├── auth.js                  # Autenticación
+│       └── dashboard.js             # Lógica del dashboard
+│
+├── 📁 confirm/                      # Confirmación de asistencia
+│   ├── index.html                   # Página de confirmación
+│   ├── css/confirm.css              # Estilos
+│   └── js/confirm.js                # Lógica de confirmación
+│
+├── 📁 access-control/               # Control de acceso
+│   ├── index.html                   # Página principal
+│   ├── scanner.html                 # Escáner QR
+│   ├── css/access.css               # Estilos
+│   └── js/scanner.js                # Lógica del escáner
+│
+└── 📁 SQL/                          # Scripts de base de datos
+    ├── crear-base-datos.sql         # Creación de tablas
+    ├── supabase-rls-policies.sql    # Políticas RLS
+    └── sql-mesas-variables.sql      # Configuración de mesas</pre>
+
+        <!-- SECCIÓN 5 -->
+        <h2><span class="emoji">🗄️</span> 5. MODELO DE BASE DE DATOS</h2>
+        <h3>Diagrama Entidad-Relación</h3>
+        <div class="diagram">┌─────────────────┐       ┌─────────────────┐
+│   auth.users    │       │  user_profiles  │
+├─────────────────┤       ├─────────────────┤
+│ id (PK)         │◄──────│ id (PK, FK)     │
+│ email           │       │ email           │
+│ ...             │       │ first_name      │
+└─────────────────┘       │ role            │
+                          └─────────────────┘
+                                  │ created_by
+                                  ▼
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│     tables      │       │  guest_passes   │       │   entry_logs    │
+├─────────────────┤       ├─────────────────┤       ├─────────────────┤
+│ id (PK)         │◄──────│ id (PK)         │◄──────│ id (PK)         │
+│ table_number    │       │ access_code     │       │ pass_id (FK)    │
+│ capacity        │       │ family_name     │       │ guests_count    │
+│ occupied_seats  │       │ total_guests    │       │ entered_at      │
+└─────────────────┘       │ table_id (FK)   │       └─────────────────┘
+                          │ confirmed       │
+                          │ created_by (FK) │
+                          └─────────────────┘</div>
+        
+        <h3>Tablas Principales</h3>
+        <table>
+            <tr><th>Tabla</th><th>Descripción</th><th>Campos Clave</th></tr>
+            <tr><td>event_config</td><td>Configuración del evento</td><td>fecha, hora, ubicación</td></tr>
+            <tr><td>tables</td><td>Mesas del evento</td><td>número, capacidad, ocupados</td></tr>
+            <tr><td>guest_passes</td><td>Pases de invitados</td><td>código, familia, confirmación</td></tr>
+            <tr><td>entry_logs</td><td>Registros de entrada</td><td>pase, cantidad, hora</td></tr>
+            <tr><td>user_profiles</td><td>Perfiles de administradores</td><td>rol (groom/bride/access)</td></tr>
+            <tr><td>invitation_downloads</td><td>Estadísticas de descargas</td><td>pase, fecha, IP</td></tr>
+        </table>
+
+        <!-- SECCIÓN 6 -->
+        <h2><span class="emoji">🔐</span> 6. SEGURIDAD (Row Level Security)</h2>
+        <p>El sistema implementa <strong>políticas RLS</strong> en PostgreSQL:</p>
+        <pre>-- Lectura pública para invitados
+CREATE POLICY "public_read" ON guest_passes 
+  FOR SELECT TO anon USING (true);
+
+-- Solo autenticados pueden crear pases
+CREATE POLICY "auth_insert" ON guest_passes 
+  FOR INSERT TO authenticated WITH CHECK (true);
+
+-- Usuarios solo ven su propio perfil
+CREATE POLICY "own_profile" ON user_profiles 
+  FOR SELECT TO authenticated USING (auth.uid() = id);</pre>
+        
+        <h3>Roles del Sistema</h3>
+        <table>
+            <tr><th>Rol</th><th>Permisos</th></tr>
+            <tr><td>anon</td><td>Ver invitación, confirmar asistencia</td></tr>
+            <tr><td>groom</td><td>Crear pases, ver dashboard completo</td></tr>
+            <tr><td>bride</td><td>Crear pases, ver dashboard completo</td></tr>
+            <tr><td>access_control</td><td>Escanear QR, registrar entradas</td></tr>
+        </table>
+
+        <!-- SECCIÓN 7 -->
+        <h2><span class="emoji">🚀</span> 7. FLUJO DE FUNCIONAMIENTO</h2>
+        
+        <div class="feature-box">
+            <h4>7.1 Flujo del Invitado</h4>
+            <ol>
+                <li>Invitado recibe enlace → <code>index.html</code></li>
+                <li>Ve invitación animada con cuenta regresiva</li>
+                <li>Click "Confirmar Asistencia" → <code>confirm/</code></li>
+                <li>Ingresa código de 4 dígitos (ej: AB12)</li>
+                <li>Sistema valida código en <code>guest_passes</code></li>
+                <li>Confirma asistencia (<code>confirmed = true</code>)</li>
+                <li>Descarga pase con código QR (PNG)</li>
+            </ol>
+        </div>
+        
+        <div class="feature-box">
+            <h4>7.2 Flujo del Administrador</h4>
+            <ol>
+                <li>Accede a <code>admin/</code> → Login con email/password</li>
+                <li>Supabase Auth valida credenciales</li>
+                <li>Carga <code>dashboard.html</code></li>
+                <li>Puede: Crear mesas, Generar pases, Ver estadísticas, Monitorear confirmaciones</li>
+            </ol>
+        </div>
+        
+        <div class="feature-box">
+            <h4>7.3 Flujo de Control de Acceso</h4>
+            <ol>
+                <li>Personal accede a <code>access-control/</code></li>
+                <li>Login con rol "access_control"</li>
+                <li>Escanea código QR del invitado</li>
+                <li>Sistema valida y registra entrada en <code>entry_logs</code></li>
+            </ol>
+        </div>
+
+        <!-- SECCIÓN 8 -->
+        <h2><span class="emoji">📊</span> 8. FUNCIONALIDADES PRINCIPALES</h2>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <h4>📄 Página de Invitación</h4>
+                <ul>
+                    <li><span class="check">✅</span> Pantalla de entrada con animación</li>
+                    <li><span class="check">✅</span> Cuenta regresiva al evento</li>
+                    <li><span class="check">✅</span> Información de padres</li>
+                    <li><span class="check">✅</span> Itinerario del evento</li>
+                    <li><span class="check">✅</span> Galería de fotos</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h4>👨‍💼 Panel de Administración</h4>
+                <ul>
+                    <li><span class="check">✅</span> Autenticación segura</li>
+                    <li><span class="check">✅</span> Dashboard con estadísticas</li>
+                    <li><span class="check">✅</span> Gestión de mesas (CRUD)</li>
+                    <li><span class="check">✅</span> Generación de pases únicos</li>
+                    <li><span class="check">✅</span> Monitor en tiempo real</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h4>✅ Confirmación</h4>
+                <ul>
+                    <li><span class="check">✅</span> Validación de código</li>
+                    <li><span class="check">✅</span> Información del pase</li>
+                    <li><span class="check">✅</span> Confirmación de asistencia</li>
+                    <li><span class="check">✅</span> Pase QR descargable</li>
+                </ul>
+            </div>
+            <div class="info-card">
+                <h4>🚪 Control de Acceso</h4>
+                <ul>
+                    <li><span class="check">✅</span> Escáner de códigos QR</li>
+                    <li><span class="check">✅</span> Búsqueda manual</li>
+                    <li><span class="check">✅</span> Registro de entradas</li>
+                    <li><span class="check">✅</span> Estadísticas de asistencia</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 9 -->
+        <h2><span class="emoji">🔧</span> 9. CONFIGURACIÓN E INSTALACIÓN</h2>
+        
+        <h3>Requisitos Previos</h3>
+        <ul>
+            <li>Python 3.x (para servidor local)</li>
+            <li>Cuenta en Supabase (gratis)</li>
+            <li>Navegador web moderno</li>
+        </ul>
+        
+        <h3>Pasos de Instalación</h3>
+        <pre># 1. Clonar repositorio
+git clone https://github.com/rafaelrav8770/EVENT-CONTROL.git
+cd EVENT-CONTROL
+
+# 2. Configurar Supabase
+# - Crear proyecto en supabase.com
+# - Ejecutar SQL de crear-base-datos.sql
+# - Copiar URL y ANON_KEY
+
+# 3. Actualizar configuración
+# Editar js/supabase-config.js con tus credenciales
+
+# 4. Ejecutar servidor local
+python -m http.server 8000
+
+# 5. Abrir en navegador
+# http://localhost:8000</pre>
+
+        <!-- SECCIÓN 10 -->
+        <h2><span class="emoji">📈</span> 10. INTEGRACIONES</h2>
+        
+        <h3>Supabase (Backend as a Service)</h3>
+        <table>
+            <tr><th>Servicio</th><th>Descripción</th></tr>
+            <tr><td>PostgreSQL Database</td><td>Base de datos principal</td></tr>
+            <tr><td>Authentication</td><td>Login de administradores</td></tr>
+            <tr><td>Realtime Subscriptions</td><td>Actualizaciones en vivo</td></tr>
+            <tr><td>Row Level Security</td><td>Políticas de seguridad</td></tr>
+        </table>
+        
+        <h3>APIs Externas</h3>
+        <table>
+            <tr><th>API</th><th>Uso</th></tr>
+            <tr><td>Google Maps</td><td>Ubicación del evento</td></tr>
+            <tr><td>WhatsApp API</td><td>Confirmación por mensaje</td></tr>
+        </table>
+
+        <!-- SECCIÓN 11 -->
+        <h2><span class="emoji">📝</span> 11. VERSIONADO</h2>
+        <table>
+            <tr><th>Versión</th><th>Fecha</th><th>Cambios</th></tr>
+            <tr><td>1.0.0</td><td>06/02/2026</td><td>Versión inicial completa</td></tr>
+        </table>
+
+        <!-- SECCIÓN 12 -->
+        <h2><span class="emoji">👥</span> 12. CRÉDITOS</h2>
+        <table>
+            <tr><th>Campo</th><th>Información</th></tr>
+            <tr><td>Desarrollador</td><td>Rafael</td></tr>
+            <tr><td>Tecnología</td><td>HTML5, CSS3, JavaScript, Supabase</td></tr>
+            <tr><td>Repositorio</td><td>https://github.com/rafaelrav8770/EVENT-CONTROL</td></tr>
+        </table>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <p><strong>Documentación generada para defensa de proyecto</strong></p>
+            <p>Febrero 2026 - EVENT-CONTROL v1.0.0</p>
+        </div>
+    </div>
+
+    <script>
+        // Agregar número de páginas para impresión
+        window.onbeforeprint = function() {
+            document.querySelector('.print-btn').style.display = 'none';
+        };
+        window.onafterprint = function() {
+            document.querySelector('.print-btn').style.display = 'block';
+        };
+    </script>
+</body>
+</html>
