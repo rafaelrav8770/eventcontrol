@@ -1,14 +1,18 @@
--- ========================================================================
--- PASO 1: VERIFICAR ESTRUCTURA DE LA TABLA 'tables'
--- ========================================================================
+-- ============================================
+-- sql-mesas-variables.sql
+-- Consultas de verificacion para las mesas.
+-- Solo lectura: no modifica nada en la BD.
+-- ============================================
 
--- Verificar estructura (solo lectura, no modifica nada)
+
+-- 1. Ver la estructura de la tabla "tables" (columnas y tipos)
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns 
 WHERE table_name = 'tables'
 ORDER BY ordinal_position;
 
 
+-- 2. Ver todas las mesas con sus asientos disponibles
 SELECT 
     table_number as "Mesa #",
     capacity as "Capacidad",
@@ -17,7 +21,7 @@ SELECT
 FROM tables
 ORDER BY table_number;
 
--- Ver resumen por capacidad
+-- 3. Resumen agrupado por capacidad (cuantas mesas de cada tamaño hay)
 SELECT 
     capacity as "Capacidad",
     COUNT(*) as "Cantidad de Mesas",
@@ -25,4 +29,3 @@ SELECT
 FROM tables
 GROUP BY capacity
 ORDER BY capacity;
-
