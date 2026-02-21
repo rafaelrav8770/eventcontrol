@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuarios del Sistema - Boda A&B</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #0f0f1a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            color: #c9a96e;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 2.5rem;
+            letter-spacing: 0.05em;
+        }
+        .card {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1rem;
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+        }
+        .role-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 0.65rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .badge-groom   { background: #1e3a5f; color: #6ab0ff; }
+        .badge-bride   { background: #3a1e3a; color: #ff9ef5; }
+        .badge-control { background: #1e3a1e; color: #6aff9e; }
+        .user-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e0d0b0;
+        }
+        .field { margin-bottom: 0.6rem; }
+        .label {
+            font-size: 0.7rem;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.15rem;
+        }
+        .value {
+            font-size: 0.9rem;
+            color: #ccc;
+            background: #0f0f1a;
+            padding: 0.4rem 0.7rem;
+            border-radius: 6px;
+            border: 1px solid #2a2a3a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #c9a96e;
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 0 0.3rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .copy-btn:hover { opacity: 1; }
+        .divider {
+            border: none;
+            border-top: 1px solid #2a2a4a;
+            margin: 1.8rem 0 1rem;
+        }
+        .portal-link {
+            display: block;
+            text-align: center;
+            background: #c9a96e;
+            color: #0f0f1a;
+            text-decoration: none;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            max-width: 480px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        .portal-link:hover { background: #d4b87a; }
+        .warning {
+            font-size: 0.7rem;
+            color: #555;
+            margin-top: 1.5rem;
+            text-align: center;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>💍 Usuarios del Sistema</h1>
+    <p class="subtitle">Boda Abidán &amp; Betsaida</p>
+
+    <!-- NOVIO -->
+    <div class="card">
+        <span class="role-badge badge-groom">Novio</span>
+        <div class="user-name">Abidán</div>
+        <div class="field">
+            <div class="label">Correo</div>
+            <div class="value">
+                <span>abi@miboda.com</span>
+                <button class="copy-btn" onclick="copiar('abi@miboda.com', this)">📋 copiar</button>
+            </div>
+        </div>
+        <div class="field">
+            <div class="label">Contraseña</div>
+            <div class="value">
+                <span>Abidan2024!</span>
+                <button class="copy-btn" onclick="copiar('Abidan2024!', this)">📋 copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVIA -->
+    <div class="card">
+        <span class="role-badge badge-bride">Novia</span>
+        <div class="user-name">Betsaida</div>
+        <div class="field">
+            <div class="label">Correo</div>
+            <div class="value">
+                <span>betsi@miboda.com</span>
+                <button class="copy-btn" onclick="copiar('betsi@miboda.com', this)">📋 copiar</button>
+            </div>
+        </div>
+        <div class="field">
+            <div class="label">Contraseña</div>
+            <div class="value">
+                <span>Betsi2024!</span>
+                <button class="copy-btn" onclick="copiar('Betsi2024!', this)">📋 copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RECEPCION -->
+    <div class="card">
+        <span class="role-badge badge-control">Control de Acceso</span>
+        <div class="user-name">Recepción</div>
+        <div class="field">
+            <div class="label">Correo</div>
+            <div class="value">
+                <span>recepcion@miboda.com</span>
+                <button class="copy-btn" onclick="copiar('recepcion@miboda.com', this)">📋 copiar</button>
+            </div>
+        </div>
+        <div class="field">
+            <div class="label">Contraseña</div>
+            <div class="value">
+                <span>Recepcion2024!</span>
+                <button class="copy-btn" onclick="copiar('Recepcion2024!', this)">📋 copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <hr class="divider">
+    <a href="/admin/" class="portal-link">→ Ir al Portal de Novios</a>
+
+    <p class="warning">⚠️ Esta página es solo para uso interno. No compartas esta URL con los invitados.</p>
+
+    <script>
+        function copiar(texto, btn) {
+            navigator.clipboard.writeText(texto).then(() => {
+                const original = btn.innerText;
+                btn.innerText = '✅ copiado';
+                setTimeout(() => btn.innerText = original, 1500);
+            });
+        }
+    </script>
+</body>
+</html>

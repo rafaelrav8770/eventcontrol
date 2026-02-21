@@ -1,15 +1,3 @@
--- ============================================
--- crear-base-datos.sql
--- Script principal para crear la base de datos
--- del sistema EventControl en Supabase.
--- Incluye: tablas, indices, RLS y datos iniciales.
--- NOTA: Nombres en español.
--- ============================================
-
-
--- =============================================
--- TABLAS
--- =============================================
 
 -- Configuracion general del evento (fecha, salon, etc.)
 CREATE TABLE IF NOT EXISTS configuracion_evento (
