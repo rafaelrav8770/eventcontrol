@@ -20,7 +20,7 @@
     }
   },
   "event": {
-    "date": "2026-03-15",
+    "date": "2026-03-28",
     "time": "17:00",
     "timezone": "America/Mexico_City",
     "venue": "Salón \"El Jardín\"",
@@ -75,6 +75,6 @@
   "messages": {
     "heroPhrase": "Nos Casamos",
     "inviteText": "Con inmensa alegría nos complace invitarlos a este día tan especial en el qué uniremos nuestras vidas para siempre porque nuestro amor es tan fuerte como la muerte y sus llamas son un fuego ardiente, la llama de Jah, por eso anhelamos ponernos como un sello sobre nuestros corazones (Eclesiastés 8:6)",
-    "confirmMessage": "Hola, soy {name}. Confirmo mi asistencia a la boda de Abidán y Betsaida el 15 de marzo de 2026 a las 5:00 pm. Asistiremos {guests} persona(s). {note}"
+    "confirmMessage": "Hola, soy {name}. Confirmo mi asistencia a la boda de Abidán y Betsaida el 28 de marzo de 2026 a las 5:00 pm. Asistiremos {guests} persona(s). {note}"
   }
 }

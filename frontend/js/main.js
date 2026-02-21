@@ -29,7 +29,7 @@
     const config = {
         brideWhatsApp: '529613030443',
         groomWhatsApp: '529611030648',
-        eventDate: '15 de marzo de 2026',
+        eventDate: '28 de marzo de 2026',
         eventTime: '5:00 pm'
     };
 

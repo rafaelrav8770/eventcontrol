@@ -7,8 +7,8 @@
 (function () {
     'use strict';
 
-    // Fecha objetivo: 28 de marzo 2025, 5pm hora de Mexico (UTC-6)
-    const targetDate = new Date('2025-03-28T17:00:00-06:00');
+    // Fecha objetivo: 28 de marzo 2026, 5pm hora de Mexico (UTC-6)
+    const targetDate = new Date('2026-03-28T17:00:00-06:00');
 
     // Agarramos los elementos donde van los numeros
     const daysEl = document.getElementById('days');
