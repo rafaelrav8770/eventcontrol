@@ -1945,3 +1945,203 @@ button {
         grid-template-columns: 1fr;
     }
 }
+
+/* ============================================
+   DESKTOP — Estilos para pantallas grandes
+   Hace que toda la pagina se vea bien en PC
+   ============================================ */
+
+/* --- Desktop mediano (tablets landscape, laptops) --- */
+@media (min-width: 769px) {
+
+    /* el hero ya no usa aspect-ratio vertical, ocupa todo el viewport */
+    .hero-section {
+        aspect-ratio: auto;
+        min-height: 100vh;
+        align-items: center;
+        padding-top: 0;
+    }
+
+    /* la imagen de fondo del hero cubre todo el ancho */
+    .hero-bg {
+        object-fit: cover;
+        object-position: center 30%;
+    }
+
+    /* contenido del hero centrado y con mas padding */
+    .hero-content {
+        padding: 40px;
+        max-width: 800px;
+    }
+
+    .hero-date {
+        margin-top: 8vh;
+    }
+
+    /* fotos de la pareja no se estiran en todo el ancho */
+    .couple-image-section {
+        display: flex;
+        justify-content: center;
+        background: var(--cream);
+    }
+
+    .couple-image-container {
+        max-width: 600px;
+    }
+
+    /* secciones de contenido mas anchas con padding lateral */
+    .section-content {
+        padding: 80px 60px;
+    }
+
+    /* countdown: todos en linea horizontal */
+    .countdown-timer {
+        gap: 20px;
+        flex-wrap: nowrap;
+    }
+
+    .countdown-item {
+        min-width: 100px;
+        padding: 25px 20px;
+    }
+
+    /* timeline mas ancho y centrado */
+    .timeline {
+        max-width: 700px;
+        padding-left: 40px;
+    }
+
+    .timeline-item {
+        padding-left: 35px;
+    }
+
+    /* galeria preview 3 columnas en desktop */
+    .gallery-preview {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 900px;
+        gap: 20px;
+    }
+
+    /* galeria grid con mas columnas */
+    .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    /* mapa y ubicacion mas anchos */
+    .map-container {
+        max-width: 900px;
+    }
+
+    /* familias lado a lado */
+    .families-grid {
+        max-width: 1000px;
+    }
+
+    /* event cards con mejor espaciado */
+    .event-cards {
+        max-width: 1000px;
+        gap: 30px;
+    }
+
+    /* botones RSVP en linea */
+    .rsvp-buttons {
+        flex-wrap: nowrap;
+    }
+
+    /* footer con mas presencia */
+    .footer {
+        padding: 80px 40px;
+    }
+
+    /* nav panel mas angosto en desktop */
+    .nav-panel {
+        max-width: 350px;
+    }
+
+    /* lightbox botones de nav mas grandes */
+    .lightbox-prev,
+    .lightbox-next {
+        font-size: 3rem;
+        padding: 20px;
+    }
+}
+
+/* --- Desktop grande (monitores full HD+) --- */
+@media (min-width: 1200px) {
+
+    .hero-content {
+        max-width: 900px;
+    }
+
+    .hero-names .name {
+        font-size: 3.5rem;
+    }
+
+    .hero-phrase {
+        font-size: 1.6rem;
+    }
+
+    /* secciones con mas padding lateral */
+    .section-content {
+        padding: 100px 80px;
+    }
+
+    /* countdown items mas grandes */
+    .countdown-item {
+        min-width: 120px;
+        padding: 30px 25px;
+    }
+
+    .countdown-number {
+        font-size: 3rem;
+    }
+
+    /* timeline todavia mas ancho */
+    .timeline {
+        max-width: 800px;
+    }
+
+    /* galeria con 4 columnas */
+    .gallery-grid {
+        grid-template-columns: repeat(4, 1fr);
+        max-width: 1200px;
+    }
+
+    /* galeria preview puede tener 4 */
+    .gallery-preview {
+        grid-template-columns: repeat(4, 1fr);
+        max-width: 1100px;
+    }
+
+    /* fotos de pareja aun mas controladas */
+    .couple-image-container {
+        max-width: 700px;
+    }
+
+    /* familias con max width */
+    .families-grid {
+        max-width: 1100px;
+    }
+
+    /* tarjetas de evento mas grandes */
+    .event-cards {
+        max-width: 1100px;
+    }
+
+    /* mapa mas ancho */
+    .map-container {
+        max-width: 1000px;
+    }
+
+    /* invitation text con mas espacio */
+    .invitation-message {
+        max-width: 800px;
+        font-size: 1.4rem;
+    }
+
+    /* footer nombres mas grandes */
+    .footer-names {
+        font-size: 3rem;
+    }
+}
