@@ -1,6 +1,7 @@
-// keep-alive.js
-// Script to keep Supabase project active by making a simple request
-// Run this with a cron job (e.g. GitHub Actions or Railway)
+// keep-alive.js — mantiene Supabase activo
+// el plan gratis pausa la BD si no la usas en varios dias
+// este script le hace un "ping" para que no se duerma
+// se corre con un cron job (GitHub Actions, Railway, etc)
 
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
@@ -19,7 +20,7 @@ async function pingDatabase() {
     console.log(`[${new Date().toISOString()}] Pinging Supabase...`);
 
     try {
-        // Simple query to wake up the database
+        // query simple solo para despertar la base
         const { data, error, count } = await supabase
             .from('pases_invitados')
             .select('id', { count: 'exact', head: true });

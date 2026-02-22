@@ -1,22 +1,25 @@
-// Usamos el cliente compartido creado por supabase-config.js
+// confirm.js — logica de confirmacion de asistencia
+// el invitado mete su codigo de 4 digitos, lo validamos contra supabase,
+// le mostramos su info, generamos QR y le dejamos bajar su invitacion
+
 const supabaseClient = window.supabaseClient;
 
-// State
+// estado global del invitado actual y config del evento
 let currentPass = null;
 let currentEventConfig = null;
 
 // =============================================
-// INITIALIZATION
+// INICIALIZACION
 // =============================================
 document.addEventListener('DOMContentLoaded', async () => {
-    // Check if code is in URL
+    // ver si el codigo viene en la URL (ej: ?code=A3X7)
     const urlParams = new URLSearchParams(window.location.search);
     const codeParam = urlParams.get('code');
 
     await loadEventDetails();
 
     if (codeParam) {
-        // Auto-fill code inputs from URL
+        // auto-rellenar los inputs con el codigo de la URL
         const inputs = document.querySelectorAll('.code-input');
         const chars = codeParam.toUpperCase().split('');
         chars.forEach((char, i) => {
@@ -25,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         checkCode(codeParam.toUpperCase());
     }
 
-    // Code input auto-advance and auto-submit
+    // cada input avanza al siguiente al escribir, y al tener 4 digitos verifica
     const inputs = document.querySelectorAll('.code-input');
     inputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
@@ -36,14 +39,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 inputs[index + 1].focus();
             }
 
-            // Check if all 4 inputs are filled
+            // si ya estan los 4 digitos, verificamos automaticamente
             const fullCode = Array.from(inputs).map(i => i.value).join('');
             if (fullCode.length === 4) {
                 checkCode(fullCode);
             }
         });
 
-        // Handle backspace to go to previous input
+        // backspace te regresa al input anterior
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' && !e.target.value && index > 0) {
                 inputs[index - 1].focus();
@@ -51,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Form submit
+    // por si le dan submit al form manualmente
     const codeForm = document.getElementById('code-form');
     if (codeForm) {
         codeForm.addEventListener('submit', (e) => {
@@ -65,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // =============================================
-// LOAD EVENT DETAILS
+// CARGAR CONFIG DEL EVENTO
 // =============================================
 async function loadEventDetails() {
     try {
@@ -85,7 +88,7 @@ async function loadEventDetails() {
 }
 
 function updateEventUI(config) {
-    // Update date/time if needed (currently static in HTML)
+    // por ahora la fecha esta hardcodeada en el HTML, pero se puede hacer dinamica
     // const dateEl = document.querySelector('.event-date');
     // if (dateEl && config.fecha_evento) {
     //     ...
@@ -93,13 +96,13 @@ function updateEventUI(config) {
 }
 
 // =============================================
-// CHECK CODE
+// VERIFICAR CODIGO
 // =============================================
 async function checkCode(code) {
     const errorEl = document.getElementById('error-message');
     const submitBtn = document.querySelector('.submit-btn');
 
-    // Show loading state
+    // poner el boton en modo "cargando"
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span>Verificando...</span>';
@@ -113,7 +116,7 @@ async function checkCode(code) {
             .eq('codigo_acceso', code)
             .single();
 
-        // Reset button
+        // restaurar el boton
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.innerHTML = '<span>Verificar Código</span>';
@@ -128,7 +131,7 @@ async function checkCode(code) {
         showSuccess(pass);
         generateQRCode(code);
 
-        // Auto-confirm if not confirmed
+        // si aun no ha confirmado, lo marcamos como confirmado automaticamente
         if (!pass.confirmado) {
             confirmGuest(pass.id);
         }
@@ -154,7 +157,7 @@ async function confirmGuest(passId) {
 }
 
 // =============================================
-// RENDER UI
+// MOSTRAR RESULTADO EN PANTALLA
 // =============================================
 function showError(msg) {
     const errorEl = document.getElementById('error-message');
@@ -167,7 +170,7 @@ function showError(msg) {
 function showSuccess(pass) {
     const tableNum = pass.mesas?.numero_mesa || 'Por asignar';
 
-    // Update step-confirm display elements
+    // poner los datos del invitado en la tarjeta de confirmacion
     const familyEl = document.getElementById('display-family');
     const guestsEl = document.getElementById('display-guests');
     const tableEl = document.getElementById('display-table');
@@ -176,7 +179,7 @@ function showSuccess(pass) {
     if (guestsEl) guestsEl.textContent = `${pass.total_invitados} persona${pass.total_invitados > 1 ? 's' : ''}`;
     if (tableEl) tableEl.textContent = `Mesa ${tableNum}`;
 
-    // Update invitation template elements
+    // tambien llenar el template de la invitacion (para la descarga)
     const invFamily = document.getElementById('inv-family');
     const invGuests = document.getElementById('inv-guests');
     const invTable = document.getElementById('inv-table');
@@ -187,7 +190,7 @@ function showSuccess(pass) {
     if (invTable) invTable.textContent = tableNum;
     if (invCode) invCode.textContent = pass.codigo_acceso;
 
-    // Switch from step-code to step-confirm
+    // cambiar de pantalla: ocultar el form y mostrar la confirmacion
     const stepCode = document.getElementById('step-code');
     const stepConfirm = document.getElementById('step-confirm');
 
@@ -196,10 +199,10 @@ function showSuccess(pass) {
 }
 
 // =============================================
-// QR GENERATION
+// GENERACION DE QR
 // =============================================
 function generateQRCode(text) {
-    // Wait for DOM to update after switching steps
+    // esperamos tantito a que el DOM se actualice antes de generar el QR
     setTimeout(() => {
         const container = document.getElementById('qr-canvas');
         if (!container) return;
@@ -217,13 +220,13 @@ function generateQRCode(text) {
 }
 
 // =============================================
-// DOWNLOAD IMAGE
+// DESCARGAR INVITACION COMO IMAGEN
 // =============================================
 window.downloadInvitation = async function () {
     const card = document.getElementById('invitation-template');
     if (!card) return;
 
-    // Temporarily make it visible for rendering
+    // lo ponemos visible pero fuera de pantalla para que html2canvas lo capture
     card.style.position = 'fixed';
     card.style.left = '-9999px';
     card.style.display = 'block';
@@ -234,7 +237,7 @@ window.downloadInvitation = async function () {
         btn.innerHTML = '<span>Generando...</span>';
         btn.disabled = true;
 
-        // Log download
+        // registrar la descarga en la base de datos
         if (currentPass) {
             await supabaseClient.from('descargas_invitacion').insert({ pase_id: currentPass.id });
         }
@@ -245,7 +248,7 @@ window.downloadInvitation = async function () {
             logging: false
         });
 
-        // Hide the template again
+        // esconder el template otra vez
         card.style.display = '';
         card.style.position = '';
         card.style.left = '';
@@ -259,7 +262,7 @@ window.downloadInvitation = async function () {
         btn.disabled = false;
 
     } catch (err) {
-        // Hide the template on error too
+        // si truena, igual escondemos el template
         card.style.display = '';
         card.style.position = '';
         card.style.left = '';

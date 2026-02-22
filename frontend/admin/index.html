@@ -1,4 +1,5 @@
-<!-- admin/index.html — Login del panel de novios -->
+<!-- admin/index.html — pagina de login del panel de novios
+     aqui se autentican con Supabase para ver el dashboard -->
 <!DOCTYPE html>
 <html lang="es">
 
@@ -19,6 +20,7 @@
 <body>
     <div class="login-container">
         <div class="login-card">
+            <!-- iniciales de los novios como logo -->
             <div class="login-header">
                 <div class="initials">
                     <span>A</span>
@@ -29,6 +31,7 @@
                 <p>Gestión de Invitados</p>
             </div>
 
+            <!-- form de login con email y password -->
             <form id="login-form" class="login-form">
                 <div class="form-group">
                     <label for="email">Correo Electrónico</label>
@@ -40,6 +43,7 @@
                     <input type="password" id="password" name="password" required placeholder="••••••••">
                 </div>
 
+                <!-- aqui se muestra el error si las credenciales fallan -->
                 <div id="error-message" class="error-message hidden"></div>
 
                 <button type="submit" class="login-btn">
@@ -53,6 +57,7 @@
         </div>
     </div>
 
+    <!-- scripts: SDK de Supabase, credenciales, y logica de auth -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/env.js"></script>
     <script src="../js/supabase-config.js"></script>

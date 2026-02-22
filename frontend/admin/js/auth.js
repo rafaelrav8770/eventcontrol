@@ -1,22 +1,26 @@
+// auth.js — maneja el login del panel admin
+// checa si ya hay sesion, y si no, muestra el form de login
+// segun el rol te manda al dashboard o al scanner
+
 const supabaseInstance = window.supabaseClient;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Solo ejecutar la logica de redireccion en la pagina de login (index.html),
-    // NO en el dashboard (que tiene su propio chequeo en dashboard.js).
+    // esto solo corre en el login, no en el dashboard
+    // (el dashboard tiene su propio check en dashboard.js)
     const isLoginPage = window.location.pathname.endsWith('/admin/index.html')
         || window.location.pathname.endsWith('/admin/')
         || window.location.pathname === '/admin';
 
     if (!isLoginPage) return;
 
-    // Check current session
+    // si ya hay sesion activa, lo mandamos segun su rol
     const { data: { session } } = await supabaseInstance.auth.getSession();
 
     if (session) {
-        // User is logged in, redirect based on role
+        // ya esta logueado, checamos su rol y redirigimos
         await checkUserRole(session.user.id);
     } else {
-        // Init auth UI
+        // no hay sesion, mostramos el form de login
         initAuthForm();
     }
 });
@@ -58,6 +62,8 @@ function initAuthForm() {
     });
 }
 
+// busca el perfil del usuario en la tabla perfiles_usuario
+// y segun el rol lo manda al lugar correcto
 async function checkUserRole(userId) {
     try {
         const { data, error } = await supabaseInstance
@@ -75,11 +81,11 @@ async function checkUserRole(userId) {
 
         console.log('User profile:', data);
 
-        // Redirect logic
+        // si es guardia va al scanner, si no va al dashboard
         if (data.rol === 'access_control') {
             window.location.href = '/access-control/scanner.html';
         } else {
-            // Admin, groom, bride go to dashboard
+            // novios y admin van al dashboard
             window.location.href = '/admin/dashboard.html';
         }
 
@@ -88,7 +94,7 @@ async function checkUserRole(userId) {
     }
 }
 
-// Global logout function
+// funcion global de logout, se llama desde el boton de cerrar sesion
 window.logout = async function () {
     await supabaseInstance.auth.signOut();
     window.location.href = '/admin/index.html';

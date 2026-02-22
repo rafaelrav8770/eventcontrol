@@ -1,11 +1,21 @@
+<!-- usuarios.html — pagina de credenciales del sistema
+     muestra los usuarios, correos y contraseñas para
+     poder entrar al panel admin. Solo uso interno. -->
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <title>Usuarios del Sistema - Boda A&B</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- estilos inline porque esta pagina es standalone -->
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Montserrat', sans-serif;
             background: #0f0f1a;
@@ -17,6 +27,7 @@
             justify-content: center;
             padding: 2rem;
         }
+
         h1 {
             font-size: 1.4rem;
             font-weight: 300;
@@ -25,12 +36,14 @@
             margin-bottom: 0.4rem;
             text-transform: uppercase;
         }
+
         .subtitle {
             color: #666;
             font-size: 0.8rem;
             margin-bottom: 2.5rem;
             letter-spacing: 0.05em;
         }
+
         .card {
             background: #1a1a2e;
             border: 1px solid #2a2a4a;
@@ -41,6 +54,7 @@
             max-width: 480px;
             position: relative;
         }
+
         .role-badge {
             position: absolute;
             top: 1rem;
@@ -52,16 +66,33 @@
             letter-spacing: 0.05em;
             text-transform: uppercase;
         }
-        .badge-groom   { background: #1e3a5f; color: #6ab0ff; }
-        .badge-bride   { background: #3a1e3a; color: #ff9ef5; }
-        .badge-control { background: #1e3a1e; color: #6aff9e; }
+
+        .badge-groom {
+            background: #1e3a5f;
+            color: #6ab0ff;
+        }
+
+        .badge-bride {
+            background: #3a1e3a;
+            color: #ff9ef5;
+        }
+
+        .badge-control {
+            background: #1e3a1e;
+            color: #6aff9e;
+        }
+
         .user-name {
             font-size: 1.1rem;
             font-weight: 600;
             margin-bottom: 1rem;
             color: #e0d0b0;
         }
-        .field { margin-bottom: 0.6rem; }
+
+        .field {
+            margin-bottom: 0.6rem;
+        }
+
         .label {
             font-size: 0.7rem;
             color: #555;
@@ -69,6 +100,7 @@
             letter-spacing: 0.08em;
             margin-bottom: 0.15rem;
         }
+
         .value {
             font-size: 0.9rem;
             color: #ccc;
@@ -80,6 +112,7 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .copy-btn {
             background: none;
             border: none;
@@ -90,12 +123,17 @@
             opacity: 0.7;
             transition: opacity 0.2s;
         }
-        .copy-btn:hover { opacity: 1; }
+
+        .copy-btn:hover {
+            opacity: 1;
+        }
+
         .divider {
             border: none;
             border-top: 1px solid #2a2a4a;
             margin: 1.8rem 0 1rem;
         }
+
         .portal-link {
             display: block;
             text-align: center;
@@ -111,7 +149,11 @@
             width: 100%;
             transition: background 0.2s;
         }
-        .portal-link:hover { background: #d4b87a; }
+
+        .portal-link:hover {
+            background: #d4b87a;
+        }
+
         .warning {
             font-size: 0.7rem;
             color: #555;
@@ -121,6 +163,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <h1>💍 Usuarios del Sistema</h1>
@@ -191,6 +234,7 @@
 
     <p class="warning">⚠️ Esta página es solo para uso interno. No compartas esta URL con los invitados.</p>
 
+    <!-- funcion para copiar al portapapeles con feedback visual -->
     <script>
         function copiar(texto, btn) {
             navigator.clipboard.writeText(texto).then(() => {
@@ -201,4 +245,5 @@
         }
     </script>
 </body>
+
 </html>

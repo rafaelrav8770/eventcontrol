@@ -1,4 +1,5 @@
-<!-- access-control/index.html — Login del control de acceso -->
+<!-- access-control/index.html — login para el personal de recepcion
+     despues de loguearse los manda al scanner de QR -->
 <!DOCTYPE html>
 <html lang="es">
 
@@ -56,6 +57,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/env.js"></script>
     <script src="../js/supabase-config.js"></script>
+    <!-- login inline: si jala, te manda al scanner -->
     <script>
         const supabase = window.supabaseClient;
 
@@ -83,7 +85,7 @@
             }
         });
 
-        // Verificar si ya esta logueado
+        // si ya hay sesion, lo mandamos directo al scanner
         (async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) window.location.href = 'scanner.html';

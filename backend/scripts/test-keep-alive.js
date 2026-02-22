@@ -1,5 +1,6 @@
-// scripts/test-keep-alive.js
-// Simple script to test the keep-alive functionality locally
+// test-keep-alive.js — prueba de conexion a Supabase
+// script rapido para verificar que las credenciales del .env jalen
+// hace un fetch directo al REST API sin usar la libreria
 
 import 'dotenv/config';
 

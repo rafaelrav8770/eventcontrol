@@ -1,5 +1,11 @@
+# signup-usuarios.py — crea los usuarios de los novios y recepcion
+# esta es la version simple que usa el anon key (no necesita service role)
+# solo registra en Auth, no crea el perfil en la tabla perfiles_usuario
+# para eso usa crear-usuarios.py que es mas completo
+
 import urllib.request, urllib.error, json
 
+# datos de conexion a Supabase
 URL  = 'https://xethjgzynlkrwsirrzsf.supabase.co'
 ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhldGhqZ3p5bmxrcndzaXJyenNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0MjQ3ODgsImV4cCI6MjA4NjAwMDc4OH0.wD_eGAbyqL9maM4sqqeZ7kuaVcmkAu3VkKW1k0DuYIg'
 
