@@ -1,0 +1,32 @@
+# workflow para mantener activa la base de datos de supabase
+# en el plan gratis se pausa despues de 7 dias sin uso
+# este cron corre cada 5 dias para hacer un ping y evitar que se duerma
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # cada 5 dias a las 8am UTC (2am hora Mexico)
+    - cron: '0 8 */5 * *'
+  # tambien se puede correr manualmente desde GitHub
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Ping a Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: node backend/api/keep-alive.js
