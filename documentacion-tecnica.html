@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación Técnica — EventControl</title>
+    <style>
+        /* ====== ESTILOS PARA IMPRESION / PDF ====== */
+        @page {
+            size: letter;
+            margin: 2.5cm 2cm;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Calibri', Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.7;
+            color: #1a1a1a;
+            background: #fff;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 30px;
+        }
+
+        /* --- Portada --- */
+        .cover {
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+            text-align: center;
+        }
+
+        .cover-logo {
+            font-size: 48pt;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .cover-subtitle {
+            font-size: 14pt;
+            color: #64748b;
+            margin-bottom: 60px;
+            font-style: italic;
+        }
+
+        .cover h1 {
+            font-size: 22pt;
+            color: #0f172a;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .cover h2 {
+            font-size: 14pt;
+            color: #475569;
+            font-weight: 400;
+            margin-bottom: 60px;
+        }
+
+        .cover-info {
+            font-size: 11pt;
+            color: #64748b;
+            line-height: 2;
+        }
+
+        .cover-info strong {
+            color: #334155;
+        }
+
+        .cover-line {
+            width: 80px;
+            height: 3px;
+            background: #2563eb;
+            margin: 30px auto;
+            border-radius: 2px;
+        }
+
+        /* --- Headers de secciones --- */
+        h1.section-title {
+            font-size: 18pt;
+            color: #0f172a;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 8px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            page-break-after: avoid;
+        }
+
+        h2 {
+            font-size: 14pt;
+            color: #1e40af;
+            margin-top: 25px;
+            margin-bottom: 12px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 12pt;
+            color: #334155;
+            margin-top: 18px;
+            margin-bottom: 8px;
+        }
+
+        p {
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+
+        /* --- Tablas --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 24px 0;
+            font-size: 11pt;
+        }
+
+        thead th {
+            background: #1e40af;
+            color: #fff;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        tbody td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        tbody tr:hover {
+            background: #eff6ff;
+        }
+
+        /* --- Listas --- */
+        ul,
+        ol {
+            margin: 10px 0 16px 28px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        /* --- Código --- */
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 10.5pt;
+            color: #1e40af;
+        }
+
+        pre {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #2563eb;
+            padding: 14px 18px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 10pt;
+            line-height: 1.5;
+            margin: 14px 0 20px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        /* --- Diagrama de modulos (visual) --- */
+        .module-diagram {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0 28px 0;
+        }
+
+        .module-box {
+            background: #eff6ff;
+            border: 2px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 14px 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 10.5pt;
+            color: #1e40af;
+        }
+
+        .module-box.main {
+            grid-column: 1 / -1;
+            background: #1e40af;
+            color: #fff;
+            border-color: #1e40af;
+            font-size: 12pt;
+        }
+
+        /* --- Diagrama ER visual --- */
+        .er-diagram {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            justify-content: center;
+            margin: 20px 0 28px 0;
+        }
+
+        .er-table {
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            width: 220px;
+            overflow: hidden;
+            font-size: 9.5pt;
+        }
+
+        .er-table-name {
+            background: #1e40af;
+            color: #fff;
+            padding: 8px 12px;
+            font-weight: 700;
+            text-align: center;
+            font-size: 10pt;
+        }
+
+        .er-table-cols {
+            padding: 8px 12px;
+        }
+
+        .er-table-cols div {
+            padding: 3px 0;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .er-table-cols div:last-child {
+            border-bottom: none;
+        }
+
+        .er-pk {
+            color: #d97706;
+            font-weight: 700;
+        }
+
+        .er-fk {
+            color: #059669;
+            font-style: italic;
+        }
+
+        .er-type {
+            color: #94a3b8;
+            font-size: 9pt;
+        }
+
+        /* --- Flujo numerado --- */
+        .flow-steps {
+            counter-reset: flow;
+            margin: 16px 0 24px 0;
+        }
+
+        .flow-step {
+            counter-increment: flow;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .flow-step::before {
+            content: counter(flow);
+            background: #2563eb;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11pt;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .flow-step p {
+            margin: 0;
+        }
+
+        /* --- Etapas de desarrollo --- */
+        .dev-stage {
+            border-left: 3px solid #2563eb;
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .dev-stage h3 {
+            color: #1e40af;
+            margin-top: 0;
+        }
+
+        /* --- Notas / Cajas informativas --- */
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #2563eb;
+            padding: 14px 18px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+            font-size: 11pt;
+        }
+
+        /* --- Evidencias placeholder --- */
+        .evidence-placeholder {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 30px 20px;
+            text-align: center;
+            color: #94a3b8;
+            font-style: italic;
+            margin: 14px 0;
+        }
+
+        /* --- Saltos de pagina --- */
+        .page-break {
+            page-break-before: always;
+        }
+
+        /* --- Indice --- */
+        .toc {
+            page-break-after: always;
+        }
+
+        .toc h1 {
+            text-align: center;
+            font-size: 20pt;
+            color: #0f172a;
+            margin-bottom: 30px;
+        }
+
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dotted #cbd5e1;
+            font-size: 12pt;
+        }
+
+        .toc-item span:first-child {
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        /* --- Boton de imprimir (solo en pantalla) --- */
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 14pt;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35);
+            z-index: 999;
+            transition: all 0.2s;
+        }
+
+        .print-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(37, 99, 235, 0.45);
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                max-width: none;
+            }
+
+            .print-btn {
+                display: none !important;
+            }
+
+            .cover {
+                min-height: 100vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ====== BOTON PARA GUARDAR COMO PDF ====== -->
+    <button class="print-btn" onclick="window.print()">📄 Guardar como PDF</button>
+
+    <!-- ====== PORTADA ====== -->
+    <div class="cover">
+        <div class="cover-logo">EventControl</div>
+        <div class="cover-subtitle">Sistema de Control de Invitados para Eventos</div>
+        <div class="cover-line"></div>
+        <h1>Documentación Técnica de la<br>Construcción del Sistema</h1>
+        <h2>Ingeniería de Software — Unidad de Desarrollo</h2>
+        <div class="cover-line"></div>
+        <div class="cover-info">
+            <strong>Asignatura:</strong> Ingeniería de Software<br>
+            <strong>Fecha:</strong> Marzo 2026<br>
+        </div>
+    </div>
+
+    <!-- ====== INDICE ====== -->
+    <div class="toc">
+        <h1>Índice</h1>
+        <div class="toc-item"><span>1. Introducción</span><span></span></div>
+        <div class="toc-item"><span>2. Justificación del sistema</span><span></span></div>
+        <div class="toc-item"><span>3. Descripción general del sistema</span><span></span></div>
+        <div class="toc-item"><span>4. Tecnologías utilizadas</span><span></span></div>
+        <div class="toc-item"><span>5. Arquitectura o estructura del sistema</span><span></span></div>
+        <div class="toc-item"><span>6. Base de datos del sistema</span><span></span></div>
+        <div class="toc-item"><span>7. Funcionamiento del sistema</span><span></span></div>
+        <div class="toc-item"><span>8. Proceso de desarrollo del sistema</span><span></span></div>
+        <div class="toc-item"><span>9. Evidencias del sistema</span><span></span></div>
+        <div class="toc-item"><span>10. Conclusión</span><span></span></div>
+    </div>
+
+    <!-- ================================================ -->
+    <!--                1. INTRODUCCION                   -->
+    <!-- ================================================ -->
+    <h1 class="section-title">1. Introducción</h1>
+
+    <p>
+        En el presente documento se describe la documentación técnica de la construcción del sistema
+        <strong>EventControl</strong>,
+        desarrollado durante la unidad de Ingeniería de Software. Este documento tiene como objetivo explicar el proceso
+        de
+        desarrollo del software, las tecnologías utilizadas, la estructura del sistema y su funcionamiento general.
+    </p>
+
+    <p>
+        <strong>EventControl</strong> es un sistema web diseñado para la administración integral de eventos, permitiendo
+        gestionar invitados, asignar mesas, controlar el acceso mediante códigos QR y llevar un registro digital de la
+        asistencia. El sistema fue desarrollado con tecnologías web modernas y se encuentra desplegado en la nube.
+    </p>
+
+    <p>
+        El desarrollo de software es una disciplina fundamental dentro de la ingeniería de sistemas, ya que permite
+        transformar problemáticas reales en soluciones digitales eficientes y escalables. A través de la construcción
+        de este sistema, se aplicaron principios de diseño, programación, bases de datos y arquitectura de software.
+    </p>
+
+    <p>
+        El lector encontrará dentro de este documento la justificación que motivó la creación del sistema, una
+        descripción
+        general de sus funcionalidades, las tecnologías empleadas, la estructura de módulos y base de datos, el flujo de
+        funcionamiento, el proceso de desarrollo seguido, evidencias del trabajo realizado y las conclusiones obtenidas.
+    </p>
+
+    <!-- ================================================ -->
+    <!--           2. JUSTIFICACION DEL SISTEMA           -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">2. Justificación del sistema</h1>
+
+    <p>
+        El desarrollo de EventControl surge a partir de la necesidad de mejorar la organización y administración de
+        eventos
+        sociales, especialmente en lo que respecta al control de invitados, la asignación de mesas y el registro de
+        acceso.
+        En muchos eventos, estos procesos se realizan de forma manual mediante listas impresas, lo cual puede generar
+        errores, pérdida de información, duplicidad de registros o dificultades para controlar la entrada de los
+        asistentes.
+    </p>
+
+    <p>
+        En el caso específico de este proyecto, se identificó la problemática de organizar un evento con un gran número
+        de
+        invitados donde era indispensable contar con un sistema que permitiera:
+    </p>
+
+    <ul>
+        <li>Registrar digitalmente a los invitados y asignarles una mesa específica.</li>
+        <li>Generar códigos de acceso únicos para cada familia o grupo de invitados.</li>
+        <li>Permitir que los invitados confirmen su asistencia de forma digital.</li>
+        <li>Controlar el ingreso de los asistentes el día del evento mediante escaneo de códigos QR.</li>
+        <li>Visualizar en tiempo real estadísticas de asistencia y ocupación de mesas.</li>
+    </ul>
+
+    <p>
+        Por esta razón se decidió desarrollar un sistema web que permitiera gestionar de manera digital toda la
+        información
+        relacionada con el evento y sus invitados. De esta manera se busca optimizar la organización, facilitar el
+        acceso
+        a la información en tiempo real y mejorar el control de asistencia durante el evento.
+    </p>
+
+    <p>
+        Además, el desarrollo de este sistema permite aplicar los conocimientos adquiridos durante la asignatura, tales
+        como
+        el uso de lenguajes de programación, manejo de bases de datos, principios de desarrollo de software,
+        arquitectura
+        cliente-servidor y despliegue en la nube.
+    </p>
+
+    <!-- ================================================ -->
+    <!--        3. DESCRIPCION GENERAL DEL SISTEMA        -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">3. Descripción general del sistema</h1>
+
+    <table>
+        <tbody>
+            <tr>
+                <td><strong>Nombre del sistema</strong></td>
+                <td>EventControl</td>
+            </tr>
+            <tr>
+                <td><strong>Tipo de aplicación</strong></td>
+                <td>Aplicación web (Frontend + Backend como servicio)</td>
+            </tr>
+            <tr>
+                <td><strong>Despliegue</strong></td>
+                <td>Vercel (hosting estático en la nube)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Objetivo del sistema</h2>
+    <p>
+        Desarrollar un sistema web que permita administrar eventos, gestionar invitados, asignar mesas, generar códigos
+        de
+        acceso únicos y controlar el ingreso de los asistentes mediante escaneo de códigos QR, todo en tiempo real.
+    </p>
+
+    <h2>Problema que resuelve</h2>
+    <p>
+        EventControl resuelve la problemática de la organización manual de eventos con gran cantidad de invitados,
+        eliminando el uso de listas impresas, reduciendo errores humanos en el conteo de asistentes y proporcionando
+        estadísticas de asistencia en tiempo real a los organizadores.
+    </p>
+
+    <h2>Usuarios del sistema</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Rol de usuario</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Administrador del evento</strong></td>
+                <td>Persona encargada de crear mesas, registrar invitados, generar pases de acceso y gestionar toda la
+                    información del evento desde el panel administrativo.</td>
+            </tr>
+            <tr>
+                <td><strong>Personal de control de acceso</strong></td>
+                <td>Staff encargado de verificar la entrada de los invitados al evento mediante el escáner de códigos QR
+                    o búsqueda manual de códigos.</td>
+            </tr>
+            <tr>
+                <td><strong>Invitado</strong></td>
+                <td>Persona que recibe su código de acceso, confirma su asistencia en línea y presenta su código QR al
+                    ingresar al evento.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ================================================ -->
+    <!--          4. TECNOLOGIAS UTILIZADAS               -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">4. Tecnologías utilizadas</h1>
+
+    <p>
+        Para el desarrollo de EventControl se utilizaron diversas herramientas y tecnologías que se describen a
+        continuación:
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tecnología</th>
+                <th>Descripción de uso</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>HTML5</strong></td>
+                <td>Lenguaje de marcado utilizado para crear la estructura y el contenido de todas las páginas del
+                    sistema: la invitación pública, el panel administrativo, la página de confirmación y el módulo de
+                    control de acceso.</td>
+            </tr>
+            <tr>
+                <td><strong>CSS3</strong></td>
+                <td>Hojas de estilo utilizadas para el diseño visual de la interfaz, incluyendo diseño responsivo,
+                    animaciones, temas de color y adaptación a dispositivos móviles.</td>
+            </tr>
+            <tr>
+                <td><strong>JavaScript (ES6+)</strong></td>
+                <td>Lenguaje de programación utilizado para toda la lógica del sistema: gestión de datos, interacción
+                    con la base de datos, escaneo de códigos QR, filtros, formularios dinámicos, modales, animaciones y
+                    comunicación en tiempo real.</td>
+            </tr>
+            <tr>
+                <td><strong>Supabase</strong></td>
+                <td>Plataforma Backend-as-a-Service utilizada como sistema gestor de base de datos PostgreSQL en la
+                    nube. Proporciona autenticación de usuarios, base de datos relacional, Row Level Security (RLS) y
+                    suscripciones en tiempo real.</td>
+            </tr>
+            <tr>
+                <td><strong>Vercel</strong></td>
+                <td>Plataforma de despliegue en la nube utilizada para alojar el sistema como sitio web estático, con
+                    despliegues automáticos desde GitHub.</td>
+            </tr>
+            <tr>
+                <td><strong>Python</strong></td>
+                <td>Lenguaje utilizado en scripts auxiliares para la creación masiva de usuarios en la base de datos de
+                    Supabase (signup y gestión de perfiles de usuario).</td>
+            </tr>
+            <tr>
+                <td><strong>Html5-QRCode</strong></td>
+                <td>Librería JavaScript utilizada para la lectura de códigos QR desde la cámara del dispositivo en el
+                    módulo de control de acceso.</td>
+            </tr>
+            <tr>
+                <td><strong>Git / GitHub</strong></td>
+                <td>Sistema de control de versiones y plataforma de repositorio remoto para gestionar el código fuente
+                    del proyecto.</td>
+            </tr>
+            <tr>
+                <td><strong>Visual Studio Code</strong></td>
+                <td>Entorno de desarrollo integrado (IDE) utilizado para escribir y depurar todo el código del sistema.
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Google Fonts</strong></td>
+                <td>Servicio de tipografías web utilizado para las fuentes del sistema: Cormorant Garamond, Great Vibes
+                    y Montserrat.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- ================================================ -->
+    <!--       5. ARQUITECTURA / ESTRUCTURA DEL SISTEMA   -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">5. Arquitectura o estructura del sistema</h1>
+
+    <p>
+        EventControl utiliza una arquitectura cliente-servidor donde el frontend se ejecuta completamente en el
+        navegador
+        del usuario y se comunica directamente con Supabase (Backend-as-a-Service) para las operaciones de datos.
+        El sistema no requiere un servidor backend tradicional; toda la lógica de negocio reside en el cliente y la
+        seguridad se garantiza mediante las políticas de Row Level Security (RLS) de Supabase.
+    </p>
+
+    <h2>Diagrama de módulos del sistema</h2>
+
+    <div class="module-diagram">
+        <div class="module-box main">EventControl — Sistema de Control de Invitados</div>
+        <div class="module-box">📋 Página de Invitación<br><small>(index.html)</small></div>
+        <div class="module-box">⚙️ Panel Administrativo<br><small>(admin/dashboard.html)</small></div>
+        <div class="module-box">📱 Control de Acceso / QR<br><small>(access-control/scanner.html)</small></div>
+        <div class="module-box">✅ Confirmación de Asistencia<br><small>(confirm/index.html)</small></div>
+        <div class="module-box">🔐 Login del Sistema<br><small>(admin/index.html, access-control/index.html)</small>
+        </div>
+        <div class="module-box">🗄️ Base de Datos (Supabase)<br><small>PostgreSQL + RLS + Realtime</small></div>
+    </div>
+
+    <p>A continuación se describe cada módulo:</p>
+
+    <h3>1. Página de Invitación Pública</h3>
+    <p>
+        Es la página principal del sistema, accesible al público. Presenta la información del evento con un diseño
+        elegante que incluye: pantalla de bienvenida con animación, nombres de los organizadores, cuenta regresiva al
+        evento,
+        información de las familias, detalles del evento (fecha, hora, ubicación), itinerario, galería de fotos,
+        y un botón para confirmar asistencia. Incluye un menú de navegación flotante tipo hamburguesa y un lightbox para
+        las fotos.
+    </p>
+
+    <h3>2. Panel Administrativo (Dashboard)</h3>
+    <p>
+        Módulo protegido por autenticación que permite a los administradores del evento gestionar toda la información:
+    </p>
+    <ul>
+        <li><strong>Gestión de mesas:</strong> Crear mesas individuales o masivas, definir capacidad, eliminar mesas
+            vacías y visualizar ocupación en un grid visual con barras de progreso.</li>
+        <li><strong>Gestión de pases de invitados:</strong> Crear pases con nombre de familia, teléfono, número de
+            invitados y mesa asignada. Cada pase genera automáticamente un código único de 4 caracteres.</li>
+        <li><strong>Estadísticas en tiempo real:</strong> Dashboard con contadores de mesas totales, invitados totales,
+            invitados confirmados y pendientes.</li>
+        <li><strong>Filtros y búsqueda:</strong> Filtrar invitados por estado (todos, confirmados, pendientes,
+            ingresados) y por creador (novio/novia). Búsqueda por nombre de familia.</li>
+        <li><strong>Acciones sobre pases:</strong> Editar, eliminar y copiar códigos al portapapeles.</li>
+    </ul>
+
+    <h3>3. Control de Acceso / Escáner QR</h3>
+    <p>
+        Módulo diseñado para ser utilizado en dispositivos móviles durante el evento. Permite al personal de acceso:
+    </p>
+    <ul>
+        <li>Escanear códigos QR de las invitaciones digitales usando la cámara del dispositivo.</li>
+        <li>Buscar invitados manualmente ingresando su código de 4 caracteres.</li>
+        <li>Verificar si el invitado está confirmado y si aún no ha ingresado.</li>
+        <li>Registrar la entrada seleccionando cuántas personas del pase ingresan.</li>
+        <li>Visualizar estadísticas de ingreso (esperados, adentro, pendientes).</li>
+        <li>Ver un log de las últimas entradas registradas y la lista de pases pendientes.</li>
+        <li>Recibir retroalimentación sonora (beep de éxito o error) al escanear.</li>
+    </ul>
+
+    <h3>4. Confirmación de Asistencia</h3>
+    <p>
+        Página pública donde los invitados pueden ingresar su código de acceso de 4 dígitos para confirmar su asistencia
+        al evento y descargar su invitación digital con código QR.
+    </p>
+
+    <h3>5. Sistema de Autenticación</h3>
+    <p>
+        Los módulos administrativo y de control de acceso están protegidos por un sistema de login que utiliza la
+        autenticación de Supabase. Solo los usuarios registrados con los roles adecuados (admin, groom, bride,
+        access_control) pueden acceder a estas funcionalidades.
+    </p>
+
+    <!-- ================================================ -->
+    <!--         6. BASE DE DATOS DEL SISTEMA             -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">6. Base de datos del sistema</h1>
+
+    <p>
+        El sistema utiliza <strong>Supabase</strong> como servicio de base de datos, el cual proporciona una base de
+        datos
+        PostgreSQL en la nube con soporte para Row Level Security (RLS), autenticación integrada y suscripciones en
+        tiempo
+        real. A continuación se describen las tablas principales del sistema:
+    </p>
+
+    <h2>Tablas principales</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Tabla</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>configuracion_evento</code></td>
+                <td>Almacena la información general del evento: número total de mesas y capacidad por mesa por defecto.
+                </td>
+            </tr>
+            <tr>
+                <td><code>mesas</code></td>
+                <td>Contiene el registro de cada mesa del evento con su número, capacidad máxima y número de asientos
+                    ocupados.</td>
+            </tr>
+            <tr>
+                <td><code>pases_invitados</code></td>
+                <td>Tabla principal del sistema. Registra cada pase de invitado con: nombre de familia, teléfono, total
+                    de invitados, código de acceso único de 4 caracteres, mesa asignada, estado de confirmación e
+                    invitados ingresados.</td>
+            </tr>
+            <tr>
+                <td><code>registros_entrada</code></td>
+                <td>Registra cada evento de ingreso al evento: qué pase fue verificado, cuántos invitados ingresaron y
+                    quién del staff los verificó.</td>
+            </tr>
+            <tr>
+                <td><code>descargas_invitacion</code></td>
+                <td>Guarda un registro estadístico de cada vez que un invitado descarga su invitación digital.</td>
+            </tr>
+            <tr>
+                <td><code>perfiles_usuario</code></td>
+                <td>Almacena información adicional de los usuarios del sistema (administradores, staff): nombre, correo
+                    y rol asignado.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>Diagrama de la estructura de la base de datos</h2>
+
+    <div class="er-diagram">
+        <div class="er-table">
+            <div class="er-table-name">configuracion_evento</div>
+            <div class="er-table-cols">
+                <div><span class="er-pk">🔑 id</span> <span class="er-type">UUID PK</span></div>
+                <div><span>total_mesas</span> <span class="er-type">INTEGER</span></div>
+                <div><span>asientos_por_mesa</span> <span class="er-type">INTEGER</span></div>
+                <div><span>creado_en</span> <span class="er-type">TIMESTAMP</span></div>
+            </div>
+        </div>
+
+        <div class="er-table">
+            <div class="er-table-name">mesas</div>
+            <div class="er-table-cols">
+                <div><span class="er-pk">🔑 id</span> <span class="er-type">UUID PK</span></div>
+                <div><span>numero_mesa</span> <span class="er-type">INTEGER</span></div>
+                <div><span>capacidad</span> <span class="er-type">INTEGER</span></div>
+                <div><span>asientos_ocupados</span> <span class="er-type">INTEGER</span></div>
+                <div><span>creado_en</span> <span class="er-type">TIMESTAMP</span></div>
+            </div>
+        </div>
+
+        <div class="er-table">
+            <div class="er-table-name">pases_invitados</div>
+            <div class="er-table-cols">
+                <div><span class="er-pk">🔑 id</span> <span class="er-type">UUID PK</span></div>
+                <div><span>nombre_familia</span> <span class="er-type">VARCHAR</span></div>
+                <div><span>telefono</span> <span class="er-type">VARCHAR</span></div>
+                <div><span>total_invitados</span> <span class="er-type">INTEGER</span></div>
+                <div><span>codigo_acceso</span> <span class="er-type">CHAR(4) UQ</span></div>
+                <div><span class="er-fk">🔗 mesa_id</span> <span class="er-type">UUID FK→mesas</span></div>
+                <div><span>confirmado</span> <span class="er-type">BOOLEAN</span></div>
+                <div><span>confirmado_en</span> <span class="er-type">TIMESTAMP</span></div>
+                <div><span>invitados_ingresados</span> <span class="er-type">INTEGER</span></div>
+                <div><span>todos_ingresaron</span> <span class="er-type">BOOLEAN</span></div>
+                <div><span class="er-fk">🔗 creado_por</span> <span class="er-type">UUID FK→users</span></div>
+                <div><span>creado_en</span> <span class="er-type">TIMESTAMP</span></div>
+            </div>
+        </div>
+
+        <div class="er-table">
+            <div class="er-table-name">registros_entrada</div>
+            <div class="er-table-cols">
+                <div><span class="er-pk">🔑 id</span> <span class="er-type">UUID PK</span></div>
+                <div><span class="er-fk">🔗 pase_id</span> <span class="er-type">UUID FK→pases</span></div>
+                <div><span>invitados_ingresando</span> <span class="er-type">INTEGER</span></div>
+                <div><span class="er-fk">🔗 verificado_por</span> <span class="er-type">UUID FK→users</span></div>
+                <div><span>registrado_en</span> <span class="er-type">TIMESTAMP</span></div>
+            </div>
+        </div>
+
+        <div class="er-table">
+            <div class="er-table-name">descargas_invitacion</div>
+            <div class="er-table-cols">
+                <div><span class="er-pk">🔑 id</span> <span class="er-type">UUID PK</span></div>
+                <div><span class="er-fk">🔗 pase_id</span> <span class="er-type">UUID FK→pases</span></div>
+                <div><span>descargado_en</span> <span class="er-type">TIMESTAMP</span></div>
+            </div>
+        </div>
+
+        <div class="er-table">
+            <div class="er-table-name">perfiles_usuario</div>
+            <div class="er-table-cols">
+                <div><span class="er-pk">🔑 id</span> <span class="er-type">UUID PK/FK→users</span></div>
+                <div><span>correo</span> <span class="er-type">VARCHAR</span></div>
+                <div><span>nombre</span> <span class="er-type">VARCHAR</span></div>
+                <div><span>rol</span> <span class="er-type">VARCHAR</span></div>
+                <div><span>creado_en</span> <span class="er-type">TIMESTAMP</span></div>
+            </div>
+        </div>
+    </div>
+
+    <h2>Seguridad de la base de datos (RLS)</h2>
+    <p>
+        Todas las tablas tienen habilitado <strong>Row Level Security (RLS)</strong>, lo cual permite definir políticas
+        de
+        acceso a nivel de fila. Las políticas implementadas son:
+    </p>
+    <ul>
+        <li><strong>Usuarios autenticados:</strong> Pueden leer, insertar, actualizar y eliminar registros en todas las
+            tablas (según su rol).</li>
+        <li><strong>Usuarios anónimos (invitados):</strong> Pueden leer los pases de invitados y la configuración del
+            evento para la página de confirmación. También pueden actualizar el estado de confirmación de un pase y
+            registrar descargas de invitaciones.</li>
+    </ul>
+
+    <!-- ================================================ -->
+    <!--        7. FUNCIONAMIENTO DEL SISTEMA             -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">7. Funcionamiento del sistema</h1>
+
+    <p>
+        A continuación se describe el flujo de funcionamiento del sistema paso a paso, desde la preparación del evento
+        hasta el registro de asistencia:
+    </p>
+
+    <div class="flow-steps">
+        <div class="flow-step">
+            <p><strong>Configuración inicial del evento.</strong> El administrador inicia sesión en el panel
+                administrativo y configura los parámetros generales del evento: cantidad de mesas y capacidad por mesa.
+            </p>
+        </div>
+        <div class="flow-step">
+            <p><strong>Creación de mesas.</strong> Se crean las mesas disponibles para el evento. Pueden crearse de
+                forma individual (especificando capacidad) o de forma masiva (varias mesas con la misma capacidad). El
+                sistema muestra un grid visual con la ocupación de cada mesa.</p>
+        </div>
+        <div class="flow-step">
+            <p><strong>Registro de invitados.</strong> El administrador registra cada grupo de invitados creando un
+                "pase" con los datos: nombre de la familia, teléfono, número de personas y mesa asignada.</p>
+        </div>
+        <div class="flow-step">
+            <p><strong>Generación de código de acceso.</strong> El sistema genera automáticamente un código único de 4
+                caracteres alfanuméricos para cada pase. Este código se utiliza como identificador del invitado y se
+                puede copiar al portapapeles para compartirlo.</p>
+        </div>
+        <div class="flow-step">
+            <p><strong>Distribución de invitaciones.</strong> El organizador comparte el código de acceso con los
+                invitados. Estos pueden ingresar a la página de confirmación del sistema e introducir su código para
+                descargar su invitación digital con código QR.</p>
+        </div>
+        <div class="flow-step">
+            <p><strong>Confirmación de asistencia.</strong> Los invitados acceden a la página de confirmación, ingresan
+                su código de 4 dígitos y confirman su asistencia. El sistema actualiza el estado del pase en la base de
+                datos y queda reflejado en el panel administrativo en tiempo real.</p>
+        </div>
+        <div class="flow-step">
+            <p><strong>Control de acceso durante el evento.</strong> El día del evento, el personal de control de acceso
+                utiliza el módulo de escáner desde su dispositivo móvil. Al escanear el código QR del invitado (o
+                buscarlo manualmente), el sistema verifica su pase, muestra su información y permite registrar cuántas
+                personas del grupo ingresan.</p>
+        </div>
+        <div class="flow-step">
+            <p><strong>Registro de asistencia.</strong> Cada ingreso queda registrado en la base de datos con la hora
+                exacta y el staff que lo verificó. El sistema actualiza las estadísticas en tiempo real: invitados
+                esperados, invitados adentro y pendientes por llegar.</p>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <strong>Nota:</strong> El módulo de control de acceso utiliza suscripciones en tiempo real de Supabase, por lo
+        que
+        cualquier cambio realizado desde el panel administrativo (como la creación o edición de un pase) se refleja
+        automáticamente en el escáner sin necesidad de recargar la página.
+    </div>
+
+    <!-- ================================================ -->
+    <!--       8. PROCESO DE DESARROLLO DEL SISTEMA       -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">8. Proceso de desarrollo del sistema</h1>
+
+    <p>
+        El desarrollo de EventControl se llevó a cabo siguiendo un proceso estructurado en varias etapas, desde el
+        análisis
+        inicial de la problemática hasta las pruebas finales del sistema:
+    </p>
+
+    <div class="dev-stage">
+        <h3>Etapa 1 — Análisis del sistema</h3>
+        <p>
+            Se identificó la problemática principal: la necesidad de un sistema digital para gestionar invitados en
+            eventos
+            con gran número de asistentes. Se definieron los requerimientos funcionales del sistema: registro de
+            invitados,
+            asignación de mesas, generación de códigos de acceso, confirmación de asistencia y control de ingreso con
+            QR.
+            También se definieron los roles de usuario necesarios (administrador, staff de acceso e invitado).
+        </p>
+    </div>
+
+    <div class="dev-stage">
+        <h3>Etapa 2 — Diseño del sistema</h3>
+        <p>
+            Se diseñó la arquitectura general del sistema como una aplicación web estática con Supabase como backend.
+            Se definió la estructura de la base de datos con sus 6 tablas principales y las relaciones entre ellas.
+            Se planificó la división en módulos: página de invitación, panel administrativo, control de acceso y
+            confirmación.
+            Se seleccionaron las tecnologías a utilizar y se diseñaron los prototipos de la interfaz de usuario.
+        </p>
+    </div>
+
+    <div class="dev-stage">
+        <h3>Etapa 3 — Desarrollo del frontend</h3>
+        <p>
+            Se programaron los módulos del sistema utilizando HTML, CSS y JavaScript. Se desarrolló la página de
+            invitación
+            con diseño responsivo, animaciones de scroll, cuenta regresiva, galería con lightbox y formulario de RSVP.
+            Se construyó el panel administrativo con todas las funcionalidades de gestión de mesas e invitados,
+            incluyendo
+            filtros, búsqueda y estadísticas. Se implementó el módulo de control de acceso con integración de la cámara
+            para escaneo QR, retroalimentación sonora y registro de entradas.
+        </p>
+    </div>
+
+    <div class="dev-stage">
+        <h3>Etapa 4 — Implementación de la base de datos</h3>
+        <p>
+            Se creó la estructura completa de la base de datos en Supabase mediante un script SQL
+            (<code>crear-base-datos.sql</code>) que incluye la creación de las 6 tablas, índices para optimización de
+            consultas y las políticas de seguridad RLS para controlar el acceso a los datos según el nivel de
+            autenticación
+            del usuario. Se desarrollaron scripts en Python para la creación masiva de usuarios del sistema.
+        </p>
+    </div>
+
+    <div class="dev-stage">
+        <h3>Etapa 5 — Integración y despliegue</h3>
+        <p>
+            Se integró el frontend con la base de datos de Supabase mediante el SDK de JavaScript. Se configuró el
+            despliegue automático en Vercel con integración a GitHub, permitiendo que cada cambio en el repositorio
+            se refleje automáticamente en producción. Se configuró la generación dinámica de variables de entorno
+            mediante un script de build (<code>generate-env.js</code>).
+        </p>
+    </div>
+
+    <div class="dev-stage">
+        <h3>Etapa 6 — Pruebas del sistema</h3>
+        <p>
+            Se realizaron pruebas funcionales de cada módulo para verificar el correcto funcionamiento del sistema:
+            creación y eliminación de mesas, creación de pases con códigos únicos, confirmación de asistencia desde la
+            página pública, escaneo de códigos QR desde dispositivos móviles, verificación del registro de entradas en
+            tiempo real y validación de las políticas de seguridad de la base de datos.
+        </p>
+    </div>
+
+    <!-- ================================================ -->
+    <!--          9. EVIDENCIAS DEL SISTEMA               -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">9. Evidencias del sistema</h1>
+
+    <p>
+        A continuación se presentan las secciones donde se pueden incluir evidencias visuales del desarrollo y
+        funcionamiento del sistema:
+    </p>
+
+    <h2>9.1 Estructura del proyecto</h2>
+    <p>El proyecto está organizado con la siguiente estructura de archivos:</p>
+
+    <pre>
+eventcontrol/
+├── frontend/                     ← Código del frontend (HTML, CSS, JS)
+│   ├── index.html               ← Página de invitación pública
+│   ├── usuarios.html            ← Página de gestión de usuarios
+│   ├── config.json              ← Configuración del evento
+│   ├── css/
+│   │   └── styles.css           ← Estilos principales (2,145 líneas)
+│   ├── js/
+│   │   ├── main.js              ← Lógica principal de la invitación
+│   │   ├── countdown.js         ← Cuenta regresiva al evento
+│   │   ├── gallery.js           ← Galería de fotos con lightbox
+│   │   └── supabase-config.js   ← Configuración de conexión a Supabase
+│   ├── admin/                   ← Panel administrativo
+│   │   ├── index.html           ← Login del administrador
+│   │   ├── dashboard.html       ← Dashboard principal
+│   │   ├── css/ y js/           ← Estilos y lógica del dashboard
+│   ├── access-control/          ← Módulo de control de acceso
+│   │   ├── index.html           ← Login del staff
+│   │   ├── scanner.html         ← Escáner de códigos QR
+│   │   ├── css/ y js/           ← Estilos y lógica del escáner
+│   └── confirm/                 ← Módulo de confirmación
+│       ├── index.html           ← Página de confirmación de asistencia
+│       ├── css/ y js/           ← Estilos y lógica de confirmación
+├── backend/
+│   ├── api/
+│   │   └── keep-alive.js        ← Endpoint para mantener activo el servicio
+│   ├── sql/
+│   │   └── crear-base-datos.sql ← Script SQL completo de la BD (174 líneas)
+│   └── scripts/                 ← Scripts auxiliares del backend
+├── scripts/
+│   ├── crear-usuarios.py        ← Script para crear usuarios en Supabase
+│   ├── signup-usuarios.py       ← Script de registro masivo de usuarios
+│   └── generate-env.js          ← Generador de variables de entorno
+├── package.json                 ← Configuración del proyecto Node.js
+├── vercel.json                  ← Configuración de despliegue en Vercel
+└── .gitignore                   ← Archivos excluidos del repositorio
+</pre>
+
+    <h2>9.2 Código de la base de datos</h2>
+    <p>Fragmento del script SQL que crea la tabla principal del sistema:</p>
+
+    <pre>
+CREATE TABLE pases_invitados (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    nombre_familia VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20),
+    total_invitados INTEGER NOT NULL DEFAULT 2,
+    codigo_acceso CHAR(4) NOT NULL UNIQUE,
+    mesa_id UUID REFERENCES mesas(id),
+    confirmado BOOLEAN DEFAULT FALSE,
+    confirmado_en TIMESTAMP WITH TIME ZONE,
+    invitados_ingresados INTEGER DEFAULT 0,
+    todos_ingresaron BOOLEAN DEFAULT FALSE,
+    creado_por UUID REFERENCES auth.users(id),
+    creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+</pre>
+
+    <h2>9.3 Capturas del sistema</h2>
+
+    <div class="evidence-placeholder">
+        📸 [Insertar captura de la página de invitación]
+    </div>
+
+    <div class="evidence-placeholder">
+        📸 [Insertar captura del panel administrativo (Dashboard)]
+    </div>
+
+    <div class="evidence-placeholder">
+        📸 [Insertar captura del escáner de códigos QR]
+    </div>
+
+    <div class="evidence-placeholder">
+        📸 [Insertar captura de la página de confirmación]
+    </div>
+
+    <h2>9.4 Capturas de la base de datos</h2>
+
+    <div class="evidence-placeholder">
+        📸 [Insertar captura de las tablas en Supabase]
+    </div>
+
+    <div class="evidence-placeholder">
+        📸 [Insertar captura de los datos en la tabla pases_invitados]
+    </div>
+
+    <!-- ================================================ -->
+    <!--               10. CONCLUSION                    -->
+    <!-- ================================================ -->
+    <h1 class="section-title page-break">10. Conclusión</h1>
+
+    <p>
+        El desarrollo del sistema EventControl permitió aplicar de manera práctica los conocimientos adquiridos durante
+        la asignatura de Ingeniería de Software, abarcando áreas fundamentales como la programación web, el diseño de
+        bases de datos relacionales, la arquitectura cliente-servidor y el despliegue de aplicaciones en la nube.
+    </p>
+
+    <p>
+        A través de este proceso se logró crear una solución funcional y completa que aborda la problemática de la
+        organización manual de eventos con gran cantidad de invitados. El sistema permite gestionar digitalmente toda
+        la información relacionada con los invitados, las mesas y el acceso al evento, proporcionando herramientas
+        que facilitan la labor tanto de los organizadores como del personal de control de acceso.
+    </p>
+
+    <p>
+        Entre los logros más destacados del desarrollo se encuentran:
+    </p>
+
+    <ul>
+        <li>La implementación de un sistema de códigos de acceso únicos que simplifican la identificación de invitados.
+        </li>
+        <li>La integración de un escáner de códigos QR que permite verificar el acceso de forma rápida y precisa.</li>
+        <li>El uso de una base de datos en la nube con suscripciones en tiempo real que mantiene la información
+            actualizada en todos los dispositivos simultáneamente.</li>
+        <li>El despliegue exitoso del sistema en una plataforma en la nube (Vercel), haciéndolo accesible desde
+            cualquier dispositivo con conexión a internet.</li>
+        <li>La implementación de políticas de seguridad a nivel de base de datos (RLS) que protegen la información
+            sensible del sistema.</li>
+    </ul>
+
+    <p>
+        Además, esta actividad permitió comprender de manera práctica el proceso completo de desarrollo de un sistema
+        de software dentro del área de ingeniería, desde la identificación de la problemática y el diseño de la solución
+        hasta la implementación, las pruebas y el despliegue en producción. Estas competencias son fundamentales para
+        la formación profesional en el área de ingeniería de sistemas y desarrollo de software.
+    </p>
+
+    <p>
+        En conclusión, EventControl demuestra que es posible desarrollar soluciones tecnológicas eficientes para
+        problemas
+        cotidianos utilizando herramientas modernas de desarrollo web, y que el proceso de construcción de software
+        requiere
+        de un enfoque estructurado que integre análisis, diseño, desarrollo, pruebas y despliegue de manera ordenada
+        y documentada.
+    </p>
+
+</body>
+
+</html>

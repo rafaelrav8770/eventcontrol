@@ -9,9 +9,6 @@ npm-debug.log
 .env.test.local
 .env.production.local
 
-# Frontend secrets (uncommitted)
-frontend/js/env.js
-
 # OS specific files
 .DS_Store
 Thumbs.db
