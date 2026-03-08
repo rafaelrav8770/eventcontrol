@@ -1,58 +1,65 @@
-// auth.js — maneja el login del panel admin
-// checa si ya hay sesion, y si no, muestra el form de login
-// segun el rol te manda al dashboard o al scanner
+// auth.js
+// maneja el inicio de sesion del panel de administracion
+// primero checa si ya hay una sesion activa, y si no muestra el formulario de login
+// dependiendo del rol del usuario lo redirige al dashboard o al scanner
 
+// sacamos la instancia de supabase que ya se creo en supabase-config.js
 const supabaseInstance = window.supabaseClient;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // esto solo corre en el login, no en el dashboard
-    // (el dashboard tiene su propio check en dashboard.js)
+    // este codigo solo corre en la pagina de login, no en el dashboard
+    // (el dashboard tiene su propia verificacion en dashboard.js)
     const isLoginPage = window.location.pathname.endsWith('/admin/index.html')
         || window.location.pathname.endsWith('/admin/')
         || window.location.pathname === '/admin';
 
-    if (!isLoginPage) return;
+    if (!isLoginPage) return; // si no es la pagina de login no hacemos nada
 
-    // si ya hay sesion activa, lo mandamos segun su rol
+    // revisamos si ya hay una sesion activa guardada
     const { data: { session } } = await supabaseInstance.auth.getSession();
 
     if (session) {
-        // ya esta logueado, checamos su rol y redirigimos
+        // ya esta logeado, vemos su rol y lo mandamos al lugar correcto
         await checkUserRole(session.user.id);
     } else {
-        // no hay sesion, mostramos el form de login
+        // no hay sesion, mostremos el form de login
         initAuthForm();
     }
 });
 
+// configura el formulario de login para manejar el envio
 function initAuthForm() {
     const loginForm = document.getElementById('login-form');
     if (!loginForm) return;
 
     loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+        e.preventDefault(); // evitamos que recargue la pagina
 
+        // sacamos los valores del formulario
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const submitBtn = loginForm.querySelector('button');
         const errorMsg = document.getElementById('error-message');
 
         try {
+            // deshabilitamos el boton mientras procesa
             submitBtn.disabled = true;
             submitBtn.textContent = 'Iniciando sesión...';
             errorMsg.style.display = 'none';
 
+            // intentamos iniciar sesion con email y contraseña
             const { data, error } = await supabaseInstance.auth.signInWithPassword({
                 email,
                 password
             });
 
-            if (error) throw error;
+            if (error) throw error; // si hay error lo mandamos al catch
 
             console.log('Login successful:', data);
-            await checkUserRole(data.user.id);
+            await checkUserRole(data.user.id); // redirigimos segun el rol
 
         } catch (error) {
+            // si fallo el login mostramos el mensaje de error
             console.error('Login error:', error);
             errorMsg.textContent = 'Credenciales inválidas. Intenta de nuevo.';
             errorMsg.style.display = 'block';
@@ -63,7 +70,7 @@ function initAuthForm() {
 }
 
 // busca el perfil del usuario en la tabla perfiles_usuario
-// y segun el rol lo manda al lugar correcto
+// y dependiendo del rol lo redirige a la pagina que le corresponde
 async function checkUserRole(userId) {
     try {
         const { data, error } = await supabaseInstance
@@ -74,18 +81,16 @@ async function checkUserRole(userId) {
 
         if (error) {
             console.error('Error fetching role:', error);
-            // If strictly needed, maybe sign out
-            // await supabaseInstance.auth.signOut();
             return;
         }
 
         console.log('User profile:', data);
 
-        // si es guardia va al scanner, si no va al dashboard
+        // si es el de control de acceso (el que escanea) va al scanner
+        // si es novio, novia o admin va al dashboard
         if (data.rol === 'access_control') {
             window.location.href = '/access-control/scanner.html';
         } else {
-            // novios y admin van al dashboard
             window.location.href = '/admin/dashboard.html';
         }
 
@@ -94,7 +99,8 @@ async function checkUserRole(userId) {
     }
 }
 
-// funcion global de logout, se llama desde el boton de cerrar sesion
+// funcion de logout — se llama desde el boton de cerrar sesion en el nav
+// es global (window) para poder usarla desde el HTML
 window.logout = async function () {
     await supabaseInstance.auth.signOut();
     window.location.href = '/admin/index.html';

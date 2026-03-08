@@ -1,33 +1,43 @@
-// ============================================
-// scanner.js — Control de acceso / Escaner QR
-// Maneja: escaneo de codigos QR, busqueda manual,
-// verificacion de pases, registro de entradas,
-// y estadisticas en tiempo real.
-// ============================================
+// scanner.js
+// Control de acceso / Escaner de codigos QR
+// este archivo maneja todo lo del punto de entrada al evento:
+// - el escaneo de QR con la camara del celular
+// - la busqueda manual por codigo
+// - la verificacion del pase contra la base de datos
+// - el registro de entradas (cuantas personas entraron)
+// - las estadisticas en tiempo real (cuantos adentro, cuantos faltan)
+//
+// usa la libreria Html5Qrcode para la camara
 
-let scanner = null;
-let guestPasses = [];
-let supabaseInstance = null;
-let lastScannedCode = null;
-let isProcessing = false;
-let currentUser = null;
+// variables globales del escaner
+let scanner = null;          // instancia del escaner QR
+let guestPasses = [];        // lista de pases cargados
+let supabaseInstance = null;  // referencia a supabase
+let lastScannedCode = null;  // ultimo codigo escaneado (para evitar duplicados)
+let isProcessing = false;    // bandera para evitar procesar dos codigos a la vez
+let currentUser = null;       // usuario logueado (el de recepcion)
 
-// Audio context para sonidos de confirmacion/error
+// creamos un contexto de audio para reproducir sonidos
+// estos sonidos sirven para confirmar si el escaneo fue exitoso o no
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-// Reproduce un beep de exito o error
+// funcion que reproduce un beep
+// si es success suena agudo y corto, si es error suena grave y largo
 function playBeep(type = 'success') {
+    // por si el navegador tiene el audio suspendido
     if (audioContext.state === 'suspended') {
         audioContext.resume();
     }
 
+    // creamos un oscilador (genera la onda de sonido)
     const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
+    const gainNode = audioContext.createGain(); // para controlar el volumen
 
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
     if (type === 'success') {
+        // sonido de exito: onda senoidal, sube de 800 a 1200 Hz rapidamente
         oscillator.type = 'sine';
         oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
@@ -36,6 +46,7 @@ function playBeep(type = 'success') {
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.1);
     } else {
+        // sonido de error: onda sawtooth, baja de 200 a 150 Hz lentamente
         oscillator.type = 'sawtooth';
         oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
         oscillator.frequency.linearRampToValueAtTime(150, audioContext.currentTime + 0.3);
@@ -46,10 +57,10 @@ function playBeep(type = 'success') {
     }
 }
 
-// Inicializa todo el scanner
+// funcion principal que inicializa todo el scanner
 async function initScanner() {
     try {
-        // Usamos el cliente de Supabase ya creado por supabase-config.js
+        // obtenemos la instancia de supabase
         supabaseInstance = window.supabaseClient;
 
         if (!supabaseInstance) {
@@ -58,7 +69,8 @@ async function initScanner() {
             return;
         }
 
-        // Verificar autenticacion
+        // verificamos que el usuario este autenticado
+        // si no esta logueado lo mandamos al login
         const { data: { session } } = await supabaseInstance.auth.getSession();
         if (!session) {
             window.location.href = '/admin/index.html';
@@ -66,13 +78,13 @@ async function initScanner() {
         }
         currentUser = session.user;
 
-        // Cargar datos
+        // cargamos los datos de los pases
         await loadData();
 
-        // Suscribirse a cambios en tiempo real
+        // nos suscribimos a cambios en tiempo real
         initRealtime();
 
-        // Iniciar escaner QR
+        // arrancamos el escaner de QR
         startScanner();
 
     } catch (error) {
@@ -81,7 +93,8 @@ async function initScanner() {
     }
 }
 
-// Carga los pases confirmados desde Supabase
+// carga los pases que ya estan confirmados desde supabase
+// solo trae los confirmados porque esos son los que pueden ingresar
 async function loadData() {
     try {
         const { data, error } = await supabaseInstance
@@ -92,9 +105,9 @@ async function loadData() {
         if (error) throw error;
 
         guestPasses = data || [];
-        updateStats();
-        renderEntryLog();
-        renderPendingList();
+        updateStats();       // actualizamos los contadores
+        renderEntryLog();    // mostramos las entradas recientes
+        renderPendingList(); // mostramos los pendientes
         console.log('Pases cargados:', guestPasses.length);
 
     } catch (error) {
@@ -103,38 +116,43 @@ async function loadData() {
     }
 }
 
-// Suscripcion a cambios en tiempo real
+// nos suscribimos a cambios en tiempo real de la tabla pases_invitados
+// asi cuando alguien actualiza algo desde el dashboard se refleja aqui
 function initRealtime() {
     supabaseInstance.channel('scanner_updates')
         .on('postgres_changes',
             { event: '*', schema: 'public', table: 'pases_invitados' },
             payload => {
                 console.log('Update received:', payload);
-                loadData();
+                loadData(); // recargamos los datos cuando hay cambios
             }
         )
         .subscribe();
 }
 
-// Inicia el escaner de camara QR
+// inicia la camara y el escaner de QR
+// usa la libreria Html5Qrcode
 function startScanner() {
     const readerEl = document.getElementById('qr-reader');
     if (!readerEl) return;
 
     scanner = new Html5Qrcode("qr-reader");
 
+    // configuracion del escaner
     const config = {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
+        fps: 10,                            // frames por segundo
+        qrbox: { width: 250, height: 250 }, // tamaño del area de escaneo
+        aspectRatio: 1.0                     // relacion de aspecto cuadrada
     };
 
+    // iniciamos el escaner usando la camara trasera
     scanner.start(
-        { facingMode: "environment" },
+        { facingMode: "environment" },  // camara trasera del celular
         config,
-        onScanSuccess,
-        onScanFailure
+        onScanSuccess,   // callback cuando se lee un QR
+        onScanFailure    // callback cuando falla (es normal, pasa todo el tiempo)
     ).catch(err => {
+        // si no se pudo iniciar la camara mostramos un mensaje
         console.error('Error starting scanner:', err);
         readerEl.innerHTML = `
             <div style="padding: 2rem; text-align: center; color: var(--error, #ff6b6b);">
@@ -146,11 +164,13 @@ function startScanner() {
     });
 }
 
-// Callback cuando se escanea un QR exitosamente
+// se ejecuta cada vez que el escaner lee un QR exitosamente
 function onScanSuccess(decodedText, decodedResult) {
-    if (isProcessing) return;
+    if (isProcessing) return; // si ya estamos procesando otro ignoramos
+
+    // debounce: si es el mismo codigo que acabamos de escanear lo ignoramos
+    // para evitar que se registre doble
     if (decodedText === lastScannedCode) {
-        // Debounce para el mismo codigo
         setTimeout(() => lastScannedCode = null, 3000);
         return;
     }
@@ -159,44 +179,47 @@ function onScanSuccess(decodedText, decodedResult) {
     processCode(decodedText);
 }
 
+// esta funcion se llama constantemente cuando no hay QR
+// no hacemos nada, es normal
 function onScanFailure(error) {
-    // Silencioso — ocurre constantemente mientras no haya QR
+    // silencioso, pasa todo el rato mientras no haya QR enfrente
 }
 
-// Busqueda manual por codigo
+// busqueda manual: el usuario escribe el codigo a mano
 function searchByCode() {
     const input = document.getElementById('manual-code');
     if (!input) return;
 
-    const code = input.value.trim().toUpperCase();
+    const code = input.value.trim().toUpperCase(); // convertimos a mayusculas
     if (!code) return;
 
     processCode(code);
 }
-// Hacer disponible globalmente
+// la hacemos global para poder llamarla desde el HTML
 window.searchByCode = searchByCode;
 
-// Procesa un codigo (QR o manual)
+// procesa un codigo (ya sea escaneado por QR o ingresado manualmente)
+// busca el pase, verifica si es valido y muestra el resultado
 async function processCode(code) {
     isProcessing = true;
 
-    // Buscar el pase localmente
+    // buscamos el pase en el arreglo local
     const pass = guestPasses.find(p => p.codigo_acceso === code);
 
     if (!pass) {
-        // Codigo no encontrado
+        // no se encontro el pase — codigo invalido
         showGuestNotFound();
         playBeep('error');
         isProcessing = false;
         return;
     }
 
-    // Verificar si ya ingresaron todos
+    // si ya entraron todos los invitados del pase
     if (pass.todos_ingresaron) {
         showAlreadyUsed(pass);
         playBeep('error');
     } else {
-        // Pase valido — mostrar info
+        // pase valido y aun tiene entradas disponibles
         showGuestInfo(pass);
         playBeep('success');
     }
@@ -204,20 +227,21 @@ async function processCode(code) {
     isProcessing = false;
 }
 
-// Muestra la info del invitado encontrado
+// muestra la informacion del invitado cuando el pase es valido
 function showGuestInfo(pass) {
     const guestInfo = document.getElementById('guest-info');
     const noGuest = document.getElementById('no-guest');
 
     if (!guestInfo) return;
 
-    // Mostrar panel de info, ocultar placeholder
+    // mostramos el panel de info y ocultamos el placeholder
     guestInfo.style.display = 'block';
     if (noGuest) noGuest.style.display = 'none';
 
     const tableNum = pass.mesas?.numero_mesa || 'Sin Asignar';
     const remaining = pass.total_invitados - pass.invitados_ingresados;
 
+    // llenamos los campos con la informacion del pase
     document.getElementById('info-family').textContent = pass.nombre_familia;
     document.getElementById('info-code').textContent = pass.codigo_acceso;
     document.getElementById('info-total').textContent = pass.total_invitados;
@@ -225,18 +249,18 @@ function showGuestInfo(pass) {
     document.getElementById('info-remaining').textContent = remaining;
     document.getElementById('info-table').textContent = tableNum;
 
-    // Configurar el input de "cuantos entran"
+    // configuramos el input de cuantos invitados van a entrar
     const enteringInput = document.getElementById('entering-count');
     if (enteringInput) {
-        enteringInput.value = 1;
-        enteringInput.max = remaining;
+        enteringInput.value = 1;         // por default 1
+        enteringInput.max = remaining;    // maximo los que faltan
     }
 
-    // Guardar el pase actual para confirmEntry
+    // guardamos el ID del pase para usar en confirmEntry
     guestInfo.dataset.passId = pass.id;
 }
 
-// Muestra mensaje de codigo no encontrado
+// muestra un mensaje cuando el codigo no se encontro
 function showGuestNotFound() {
     const guestInfo = document.getElementById('guest-info');
     const noGuest = document.getElementById('no-guest');
@@ -252,14 +276,14 @@ function showGuestNotFound() {
             </svg>
             <p style="color: var(--error, #ff6b6b);">Código no válido. No existe en el sistema.</p>
         `;
-        // Restaurar despues de 3 segundos
+        // despues de 3 segundos restauramos la vista
         setTimeout(() => resetScannerView(), 3000);
     }
 
     showToast('Código no válido', 'error');
 }
 
-// Muestra que ya ingresaron todos
+// muestra un mensaje cuando ya entraron todos los del pase
 function showAlreadyUsed(pass) {
     const guestInfo = document.getElementById('guest-info');
     const noGuest = document.getElementById('no-guest');
@@ -284,7 +308,8 @@ function showAlreadyUsed(pass) {
     showToast('Este pase ya completó sus entradas', 'warning');
 }
 
-// Restaura la vista del scanner al estado inicial
+// restaura la vista del escaner a su estado original
+// (el icono de camara y el texto de instrucciones)
 function resetScannerView() {
     const guestInfo = document.getElementById('guest-info');
     const noGuest = document.getElementById('no-guest');
@@ -302,7 +327,8 @@ function resetScannerView() {
     }
 }
 
-// Confirma la entrada de invitados
+// confirma la entrada de los invitados
+// actualiza la base de datos con cuantos entraron
 window.confirmEntry = async function () {
     const guestInfo = document.getElementById('guest-info');
     if (!guestInfo) return;
@@ -311,15 +337,16 @@ window.confirmEntry = async function () {
     const enteringInput = document.getElementById('entering-count');
     const enteringCount = parseInt(enteringInput?.value) || 1;
 
+    // buscamos el pase en el arreglo local
     const pass = guestPasses.find(p => p.id === passId);
     if (!pass) return;
 
     try {
-        // Actualizar base de datos
+        // calculamos el nuevo total de personas adentro
         const newTotal = pass.invitados_ingresados + enteringCount;
-        const allEntered = newTotal >= pass.total_invitados;
+        const allEntered = newTotal >= pass.total_invitados; // si ya entraron todos
 
-        // 1. Registrar entrada en el log
+        // paso 1: registramos la entrada en el log de registros
         await supabaseInstance
             .from('registros_entrada')
             .insert({
@@ -328,7 +355,7 @@ window.confirmEntry = async function () {
                 verificado_por: currentUser.id
             });
 
-        // 2. Actualizar pase
+        // paso 2: actualizamos el pase con el nuevo conteo
         const { error } = await supabaseInstance
             .from('pases_invitados')
             .update({
@@ -339,13 +366,13 @@ window.confirmEntry = async function () {
 
         if (error) throw error;
 
-        // Exito
+        // todo salio bien, restauramos la vista y recargamos datos
         resetScannerView();
         await loadData();
         showToast(`Entrada registrada: ${enteringCount} persona(s) de ${pass.nombre_familia}`, 'success');
         playBeep('success');
 
-        // Limpiar input manual
+        // limpiamos el input manual por si fue busqueda manual
         const manualInput = document.getElementById('manual-code');
         if (manualInput) manualInput.value = '';
 
@@ -355,17 +382,18 @@ window.confirmEntry = async function () {
     }
 };
 
-// Cancela el proceso de entrada
+// cancela el proceso de entrada, regresa a la vista normal
 window.cancelEntry = function () {
     resetScannerView();
 };
 
-// Actualiza las estadisticas del panel derecho
+// actualiza las estadisticas del panel (esperados, adentro, pendientes)
 function updateStats() {
     const total = guestPasses.reduce((sum, p) => sum + p.total_invitados, 0);
     const entered = guestPasses.reduce((sum, p) => sum + p.invitados_ingresados, 0);
     const pending = total - entered;
 
+    // ponemos los numeros en los elementos del HTML
     const statExpected = document.getElementById('stat-expected');
     const statInside = document.getElementById('stat-inside');
     const statPending = document.getElementById('stat-pending');
@@ -375,12 +403,12 @@ function updateStats() {
     if (statPending) statPending.textContent = pending;
 }
 
-// Renderiza el log de ultimas entradas
+// renderiza el log de las ultimas entradas registradas
 function renderEntryLog() {
     const container = document.getElementById('entry-log');
     if (!container) return;
 
-    // Filtrar pases con al menos una entrada
+    // filtramos solo los pases que ya tienen al menos una persona adentro
     const enteredPasses = guestPasses
         .filter(p => p.invitados_ingresados > 0)
         .sort((a, b) => new Date(b.actualizado_en || b.creado_en) - new Date(a.actualizado_en || a.creado_en));
@@ -390,6 +418,7 @@ function renderEntryLog() {
         return;
     }
 
+    // mostramos los ultimos 10
     container.innerHTML = enteredPasses.slice(0, 10).map(pass => {
         const tableNum = pass.mesas?.numero_mesa || '—';
         return `
@@ -401,7 +430,7 @@ function renderEntryLog() {
     }).join('');
 }
 
-// Renderiza la lista de pendientes por llegar
+// renderiza la lista de pases pendientes (los que aun no han llegado completos)
 function renderPendingList() {
     const container = document.getElementById('pending-list');
     if (!container) return;
@@ -425,7 +454,7 @@ function renderPendingList() {
     }).join('');
 }
 
-// Toast de notificacion (usa el mismo contenedor del HTML)
+// muestra notificaciones temporales (toast) en la esquina
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     if (!container) {
@@ -439,21 +468,22 @@ function showToast(message, type = 'info') {
 
     container.appendChild(toast);
 
-    // Forzar reflow para animacion
+    // forzamos un reflow para que la animacion CSS funcione
     toast.offsetHeight;
     toast.classList.add('show');
 
+    // lo quitamos despues de 3 segundos
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-// Cerrar sesion
+// funcion de logout, cierra sesion y redirige al login
 window.logout = async function () {
     await supabaseInstance.auth.signOut();
     window.location.href = '/admin/index.html';
 };
 
-// Arrancar al cargar la pagina
+// iniciamos todo cuando el DOM esta listo
 document.addEventListener('DOMContentLoaded', initScanner);

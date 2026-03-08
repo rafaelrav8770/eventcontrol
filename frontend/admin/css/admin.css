@@ -1,8 +1,7 @@
-/* ============================================
-   admin.css — Estilos del panel de administracion
-   Sidebar, stats, configuracion, mesas, pases,
-   grid de invitados, modales y responsive.
-   ============================================ */
+/* admin.css — Estilos del panel de administracion
+   sidebar, tarjetas de stats, configuracion de mesas,
+   formularios de pases, grid de invitados, modales
+   y responsive para movil */
 
 /* --- Variables del tema oscuro --- */
 :root {
@@ -420,7 +419,7 @@ body {
     border-color: var(--primary);
 }
 
-/* ==================== QUICK ADD TABLES ==================== */
+/* --- QUICK ADD TABLES --- */
 .quick-add-section {
     margin-top: 2rem;
     padding-top: 1.5rem;
@@ -502,7 +501,7 @@ body {
     }
 }
 
-/* ==================== PASS FORM ==================== */
+/* --- PASS FORM --- */
 .pass-form {
     display: grid;
     gap: 1.5rem;
@@ -699,7 +698,7 @@ body {
     color: var(--text);
 }
 
-/* ==================== TOAST NOTIFICATIONS ==================== */
+/* --- TOAST NOTIFICATIONS --- */
 .toast-container {
     position: fixed;
     top: 2rem;

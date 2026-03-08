@@ -1,8 +1,6 @@
-/* ============================================
-   access.css — Estilos del control de acceso
-   Login, scanner QR, info del invitado, stats,
-   lista de pendientes y log de entradas.
-   ============================================ */
+/* access.css — Estilos de la pagina de control de acceso
+   login del personal, scanner QR, info del invitado,
+   estadisticas en vivo, lista de pendientes y log de entradas */
 :root {
     --primary: #b8860b;
     --primary-light: #d4a853;

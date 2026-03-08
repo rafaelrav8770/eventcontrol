@@ -1,85 +1,129 @@
+-- crear-base-datos.sql
+-- Script para crear la estructura completa de la base de datos
+-- de nuestro sistema de control de invitados para la boda
+--
+-- incluye:
+--   - tabla de configuracion del evento
+--   - tabla de mesas
+--   - tabla de pases de invitados (la mas importante)
+--   - tabla de registros de entrada (logs)
+--   - tabla de descargas (invitaciones)
+--   - tabla de perfiles de usario
+--
+-- tambien tiene los indices para busquedas rapidas
+-- y las politicas de seguridad RLS (Row Level Security)
+-- que es lo que permite que supabase sea seguro sin backend
+--
+-- como usarlo: copiar y pegar todo esto en el SQL Editor de Supabase
 
--- Configuracion general del evento (fecha, salon, etc.)
-CREATE TABLE IF NOT EXISTS configuracion_evento (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    total_mesas INTEGER DEFAULT 10,             -- cuantas mesas tiene el evento
-    asientos_por_mesa INTEGER DEFAULT 8,        -- sillas por mesa (referencia)
-    fecha_evento DATE,                          -- fecha del evento
-    hora_evento TIME,                           -- hora del evento
-    nombre_salon TEXT,                          -- nombre del salon
-    direccion_salon TEXT,                       -- direccion del salon
+-- =============================================
+-- TABLA: configuracion_evento
+-- guarda datos generales del evento: cuantas mesas hay,
+-- capacidad por mesa, etc
+-- =============================================
+CREATE TABLE configuracion_evento (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    total_mesas INTEGER DEFAULT 10,          -- cuantas mesas tiene el salon
+    asientos_por_mesa INTEGER DEFAULT 8,     -- capacidad default de cada mesa
+    creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================
+-- TABLA: mesas
+-- cada fila es una mesa del evento
+-- el campo asientos_ocupados se actualiza automaticamente
+-- cuando se asignan invitados
+-- =============================================
+CREATE TABLE mesas (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    numero_mesa INTEGER NOT NULL,                -- numero de la mesa (1, 2, 3...)
+    capacidad INTEGER NOT NULL DEFAULT 8,        -- cuantos invitados caben
+    asientos_ocupados INTEGER DEFAULT 0,         -- cuantos ya estan asignados
+    creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================
+-- TABLA: pases_invitados
+-- esta es la tabla principal del sistema
+-- cada pase tiene un codigo unico de 4 digitos
+-- que el invitado usa para confirmar y para entrar al evento
+-- =============================================
+CREATE TABLE pases_invitados (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    nombre_familia VARCHAR(255) NOT NULL,         -- ej: "Familia Rodriguez"
+    telefono VARCHAR(20),                          -- telefono para WhatsApp
+    total_invitados INTEGER NOT NULL DEFAULT 2,    -- cuantos vienen con este pase
+    codigo_acceso CHAR(4) NOT NULL UNIQUE,        -- el codigo de 4 caracteres
+    mesa_id UUID REFERENCES mesas(id),            -- a que mesa estan asignados
+    confirmado BOOLEAN DEFAULT FALSE,              -- si ya confirmo asistencia
+    confirmado_en TIMESTAMP WITH TIME ZONE,        -- cuando confirmo
+    invitados_ingresados INTEGER DEFAULT 0,        -- cuantos ya entraron
+    todos_ingresaron BOOLEAN DEFAULT FALSE,        -- si ya entraron todos
+    creado_por UUID REFERENCES auth.users(id),     -- quien creo este pase (novio o novia)
     creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Mesas del evento (cada mesa tiene capacidad y se vincula al evento)
-CREATE TABLE IF NOT EXISTS mesas (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    evento_id UUID REFERENCES configuracion_evento(id) ON DELETE CASCADE,
-    numero_mesa INTEGER NOT NULL,               -- numero de mesa (1, 2, 3...)
-    capacidad INTEGER NOT NULL DEFAULT 10,      -- cuantas personas caben
-    asientos_ocupados INTEGER DEFAULT 0,        -- cuantos asientos estan ocupados
+-- =============================================
+-- TABLA: registros_entrada
+-- cada vez que alguien del pase entra al evento
+-- se registra aqui con la hora y quien lo verifico
+-- =============================================
+CREATE TABLE registros_entrada (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    pase_id UUID REFERENCES pases_invitados(id),   -- a que pase pertenece
+    invitados_ingresando INTEGER DEFAULT 1,         -- cuantos entran en este registro
+    verificado_por UUID REFERENCES auth.users(id),  -- el staff que los dejo pasar
+    registrado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================
+-- TABLA: descargas_invitacion
+-- lleva un conteo de cuantas veces descargan la invitacion
+-- nomas es para estadisticas, no afecta nada
+-- =============================================
+CREATE TABLE descargas_invitacion (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    pase_id UUID REFERENCES pases_invitados(id),
+    descargado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================
+-- TABLA: perfiles_usuario
+-- guarda informacion extra de los usuarios del sistema
+-- (los de auth.users solo tienen email y password)
+-- aqui ponemos el nombre, rol, etc
+-- =============================================
+CREATE TABLE perfiles_usuario (
+    id UUID PRIMARY KEY REFERENCES auth.users(id),  -- mismo ID que en auth
+    correo VARCHAR(255),
+    nombre VARCHAR(255),
+    rol VARCHAR(50) DEFAULT 'admin',                -- admin, groom, bride, access_control
     creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Pases de invitados (cada familia tiene un pase con codigo unico)
-CREATE TABLE IF NOT EXISTS pases_invitados (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    codigo_acceso VARCHAR(10) UNIQUE NOT NULL,   -- codigo de 4 digitos (ej: A3X7)
-    nombre_familia TEXT NOT NULL,                -- nombre de la familia
-    total_invitados INTEGER NOT NULL DEFAULT 1,  -- cuantas personas incluye el pase
-    invitados_ingresados INTEGER DEFAULT 0,      -- cuantas ya entraron al evento
-    mesa_id UUID REFERENCES mesas(id),           -- mesa asignada
-    telefono VARCHAR(20),                        -- telefono (para WhatsApp)
-    confirmado BOOLEAN DEFAULT FALSE,            -- si ya confirmo asistencia
-    confirmado_en TIMESTAMP WITH TIME ZONE,      -- cuando confirmo
-    todos_ingresaron BOOLEAN DEFAULT FALSE,      -- si ya entraron todos
-    creado_por UUID REFERENCES auth.users(id),   -- quien creo el pase (novio o novia)
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Registros de entrada (cada vez que alguien entra al evento)
-CREATE TABLE IF NOT EXISTS registros_entrada (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    pase_id UUID REFERENCES pases_invitados(id),         -- a que pase pertenece
-    cantidad_invitados INTEGER NOT NULL,                  -- cuantas personas entraron
-    ingreso_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),    -- hora de entrada
-    registrado_por UUID REFERENCES auth.users(id)         -- quien los registro (guardia)
-);
-
--- Descargas de invitacion (cuando un invitado descarga su QR)
-CREATE TABLE IF NOT EXISTS descargas_invitacion (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    pase_id UUID REFERENCES pases_invitados(id),         -- que pase descargo
-    descargado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    direccion_ip TEXT                                     -- IP desde donde descargo
-);
-
--- Perfiles de usuario (novio, novia, guardia, admin)
-CREATE TABLE IF NOT EXISTS perfiles_usuario (
-    id UUID PRIMARY KEY REFERENCES auth.users(id),       -- vinculado a auth de Supabase
-    correo TEXT,
-    nombre TEXT,
-    rol TEXT CHECK (rol IN ('groom', 'bride', 'access_control', 'admin')),
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-
 -- =============================================
--- INDICES (para que las busquedas sean rapidas)
+-- INDICES
+-- para que las busquedas sean mas rapidas
 -- =============================================
 
-CREATE INDEX IF NOT EXISTS idx_pases_codigo_acceso ON pases_invitados(codigo_acceso);
-CREATE INDEX IF NOT EXISTS idx_pases_mesa_id ON pases_invitados(mesa_id);
-CREATE INDEX IF NOT EXISTS idx_mesas_numero ON mesas(numero_mesa);
-CREATE INDEX IF NOT EXISTS idx_registros_pase_id ON registros_entrada(pase_id);
+-- indice para buscar pases por codigo (se usa MUCHO)
+CREATE INDEX idx_pases_codigo ON pases_invitados(codigo_acceso);
 
+-- indice para buscar pases por mesa
+CREATE INDEX idx_pases_mesa ON pases_invitados(mesa_id);
+
+-- indice para buscar registros de un pase especifico
+CREATE INDEX idx_registros_pase ON registros_entrada(pase_id);
 
 -- =============================================
--- SEGURIDAD: Row Level Security (RLS)
+-- ROW LEVEL SECURITY (RLS)
+-- estas politicas definen quien puede leer y escribir cada tabla
+-- basicamente: los usuarios autenticados pueden hacer todo
+-- porque el sistema no tiene usuarios publicos
 -- =============================================
 
+-- habilitamos RLS en todas las tablas
 ALTER TABLE configuracion_evento ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mesas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pases_invitados ENABLE ROW LEVEL SECURITY;
@@ -87,68 +131,43 @@ ALTER TABLE registros_entrada ENABLE ROW LEVEL SECURITY;
 ALTER TABLE descargas_invitacion ENABLE ROW LEVEL SECURITY;
 ALTER TABLE perfiles_usuario ENABLE ROW LEVEL SECURITY;
 
+-- politicas de lectura: todos los autenticados pueden leer todo
+CREATE POLICY "read_config" ON configuracion_evento FOR SELECT TO authenticated USING (true);
+CREATE POLICY "read_tables" ON mesas FOR SELECT TO authenticated USING (true);
+CREATE POLICY "read_passes" ON pases_invitados FOR SELECT TO authenticated USING (true);
+CREATE POLICY "read_entries" ON registros_entrada FOR SELECT TO authenticated USING (true);
+CREATE POLICY "read_profiles" ON perfiles_usuario FOR SELECT TO authenticated USING (true);
 
--- =============================================
--- POLITICAS RLS
--- =============================================
+-- politicas de escritura: todos los autenticados pueden insertar
+CREATE POLICY "insert_config" ON configuracion_evento FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "insert_tables" ON mesas FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "insert_passes" ON pases_invitados FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "insert_entries" ON registros_entrada FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "insert_profiles" ON perfiles_usuario FOR INSERT TO authenticated WITH CHECK (true);
 
--- Configuracion del evento: todos pueden leer, solo autenticados escriben
-CREATE POLICY "lectura_publica_config" ON configuracion_evento 
-    FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "escritura_auth_config" ON configuracion_evento 
-    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- politicas de actualizacion: todos los autenticados pueden actualizar
+CREATE POLICY "update_config" ON configuracion_evento FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "update_tables" ON mesas FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "update_passes" ON pases_invitados FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "update_profiles" ON perfiles_usuario FOR UPDATE TO authenticated USING (true);
 
--- Mesas: todos pueden leer, solo autenticados escriben
-CREATE POLICY "lectura_publica_mesas" ON mesas 
-    FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "escritura_auth_mesas" ON mesas 
-    FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- politicas de eliminacion: todos los autenticados pueden borrar
+CREATE POLICY "delete_tables" ON mesas FOR DELETE TO authenticated USING (true);
+CREATE POLICY "delete_passes" ON pases_invitados FOR DELETE TO authenticated USING (true);
+CREATE POLICY "delete_entries" ON registros_entrada FOR DELETE TO authenticated USING (true);
 
--- Pases: todos leen, autenticados crean/borran, todos actualizan (para confirmaciones)
-CREATE POLICY "lectura_publica_pases" ON pases_invitados 
-    FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "insertar_auth_pases" ON pases_invitados 
-    FOR INSERT TO authenticated WITH CHECK (true);
-CREATE POLICY "actualizar_publica_pases" ON pases_invitados 
-    FOR UPDATE TO authenticated, anon USING (true);
-CREATE POLICY "borrar_auth_pases" ON pases_invitados 
-    FOR DELETE TO authenticated USING (true);
+-- politica especial: la pagina de confirmacion necesita leer pases sin auth
+-- porque los invitados no estan logeados cuando meten su codigo
+CREATE POLICY "public_read_passes" ON pases_invitados FOR SELECT TO anon USING (true);
 
--- Entradas: todos leen, solo autenticados registran
-CREATE POLICY "lectura_publica_entradas" ON registros_entrada 
-    FOR SELECT TO authenticated, anon USING (true);
-CREATE POLICY "insertar_auth_entradas" ON registros_entrada 
-    FOR INSERT TO authenticated WITH CHECK (true);
+-- politica para que los anonimos puedan actualizar la confirmacion
+CREATE POLICY "public_update_passes" ON pases_invitados FOR UPDATE TO anon USING (true);
 
--- Descargas de invitacion: todos pueden insertar, solo autenticados leen
-CREATE POLICY "insertar_publica_descargas" ON descargas_invitacion 
-    FOR INSERT TO authenticated, anon WITH CHECK (true);
-CREATE POLICY "lectura_auth_descargas" ON descargas_invitacion 
-    FOR SELECT TO authenticated USING (true);
+-- la confirmacion tambien necesita leer la config
+CREATE POLICY "public_read_config" ON configuracion_evento FOR SELECT TO anon USING (true);
 
--- Perfiles de usuario: cada quien solo ve/edita el suyo
-CREATE POLICY "leer_propio_perfil" ON perfiles_usuario 
-    FOR SELECT TO authenticated USING (auth.uid() = id);
-CREATE POLICY "insertar_propio_perfil" ON perfiles_usuario 
-    FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
-CREATE POLICY "actualizar_propio_perfil" ON perfiles_usuario 
-    FOR UPDATE TO authenticated USING (auth.uid() = id);
+-- lectura publica de mesas (pa que se vea el numero de mesa en la confirmacion)
+CREATE POLICY "public_read_tables" ON mesas FOR SELECT TO anon USING (true);
 
-
--- =============================================
--- DATOS INICIALES
--- =============================================
-
--- Crear configuracion inicial del evento (10 mesas, 10 sillas c/u)
-INSERT INTO configuracion_evento (total_mesas, asientos_por_mesa)
-VALUES (10, 10)
-ON CONFLICT DO NOTHING;
-
-
--- =============================================
--- VERIFICACION: listar todas las tablas creadas
--- =============================================
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
-ORDER BY table_name;
+-- los anonimos pueden registrar descargas
+CREATE POLICY "insert_downloads_anon" ON descargas_invitacion FOR INSERT TO anon WITH CHECK (true);

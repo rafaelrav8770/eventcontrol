@@ -1,38 +1,46 @@
-// ============================================
-// dashboard.js — Panel de Administración
-// Este es el archivo mas grande del proyecto.
-// Maneja: mesas, pases de invitados, estadisticas,
-// monitor en vivo, filtros, edicion, eliminacion,
-// y mucho CSS inline al final.
-// ============================================
+// dashboard.js
+// Este es el archivo principal del panel de administracion
+// es el mas grande del proyecto porque tiene toda la logica:
+// - gestion de mesas (crear, eliminar, ver invitados)
+// - pases de invitados (crear, editar, borrar, copiar codigo)
+// - estadisticas del evento (cuantos confirmaron, cuantos adentro)
+// - monitor en vivo (quien ya entro al evento)
+// - filtros y busqueda de invitados
+// - estilos CSS que se inyectan dinamicamente
+//
+// Nota: este archivo es algo largo pero preferimos tener todo
+// junto en vez de separarlo en muchos archivos chiquitos
 
-// Shortcut para Supabase
+// funcion auxiliar para obtener el cliente de supabase
+// la usamos en todo el archivo pa no escribir window.supabaseClient cada vez
 function getSupabase() {
     return window.supabaseClient;
 }
 
-// --- Estado global del dashboard ---
-let currentUser = null;       // usuario logueado
-let userProfile = null;       // perfil del usuario (nombre, rol)
-let eventConfig = null;       // config del evento (mesas, asientos)
-let tables = [];              // lista de mesas
-let passes = [];              // lista de pases/invitaciones
-let userProfiles = {};        // cache de perfiles de creadores
-let isInitialized = false;    // evita doble inicializacion
+// --- Varibales globales del dashboard ---
+// las usamos en todas las funciones por eso son globales
+let currentUser = null;       // el usuario que esta logueado ahorita
+let userProfile = null;       // perfil del usuario (nombre, rol, etc)
+let eventConfig = null;       // configuracion del evento (cuantas mesas, asientos)
+let tables = [];              // arreglo con todas las mesas
+let passes = [];              // arreglo con todos los pases de invitados
+let userProfiles = {};        // cache de perfiles de los que crearon los pases
+let isInitialized = false;    // bandera para evitar que se inicialize dos veces
 let tableTypes = [];          // tipos de mesa para creacion rapida
 
-// =============================================
-// INICIALIZACION — arranca todo al cargar la pagina
-// =============================================
+// -------------------------------------------
+// INICIO DEL DASHBOARD
+// esta parte se ejecuta cuando la pagina termina de cargar
+// -------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
     if (isInitialized) return;
     isInitialized = true;
 
-    // Primero checamos que este logueado
+    // primero verificamos que el usuario este logeado
     const hasAuth = await checkDashboardAuth();
     if (!hasAuth) return;
 
-    // Cargamos perfil, nav, datos, formularios y UI
+    // si si esta logueado cargamos todo: perfil, nav, datos, forms y la interfaz
     await loadUserProfile();
     initNavigation();
     await loadDashboardData();
@@ -41,7 +49,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUserGreeting();
 });
 
-// Verifica que haya sesion activa, si no redirige al login
+// verifica que haya una sesion activa
+// si no hay sesion lo mandamos al login
 async function checkDashboardAuth() {
     const supabase = getSupabase();
     if (!supabase) {
@@ -60,7 +69,7 @@ async function checkDashboardAuth() {
     return true;
 }
 
-// Trae el perfil del usuario logueado (nombre, rol, etc)
+// trae el perfil del usario logueado de la tabla perfiles_usuario
 async function loadUserProfile() {
     const supabase = getSupabase();
     const { data: profile } = await supabase
@@ -74,7 +83,7 @@ async function loadUserProfile() {
     }
 }
 
-// Saludo personalizado en el header ("Hola, Abidan")
+// pone el saludo personalizado en el header (ejemplo: "Hola, Abidan")
 function updateUserGreeting() {
     const greetingEl = document.getElementById('user-greeting');
     if (greetingEl && userProfile) {
@@ -82,10 +91,11 @@ function updateUserGreeting() {
     }
 }
 
-// =============================================
+// -------------------------------------------
 // NAVEGACION DEL SIDEBAR
-// Maneja los tabs, filtros y busqueda
-// =============================================
+// cuando el usuario da click en los links del menu lateral
+// cambiamos la seccion activa y cargamos los datos
+// -------------------------------------------
 function initNavigation() {
     const navLinks = document.querySelectorAll('.sidebar-nav a');
 
@@ -95,6 +105,19 @@ function initNavigation() {
             const section = link.dataset.section;
 
             // Update active states
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+
+            // mostramos la seccion correspondiente
+            document.querySelectorAll('.dashboard-section').forEach(s => {
+                s.classList.remove('active');
+            });
+            document.getElementById(`section-${section}`).classList.add('active');
+
+            // recargamos datos segun la seccion
+            if (section === 'guests') loadGuests();
+            if (section === 'passes') loadRecentPasses();
+            if (section === 'live-monitor') loadLiveMonitor();
             navLinks.forEach(l => l.classList.remove('active'));
             link.classList.add('active');
 
@@ -111,7 +134,7 @@ function initNavigation() {
         });
     });
 
-    // Filter buttons
+    // botones de filtro (todos, confirmados, adentro, pendientes)
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -120,7 +143,7 @@ function initNavigation() {
         });
     });
 
-    // Search
+    // buscador de invitados por nombre
     const searchInput = document.getElementById('guest-search');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -129,7 +152,8 @@ function initNavigation() {
     }
 }
 
-// Navegar a una seccion desde las tarjetas de stats (click en "invitados" etc)
+// funcion para navegar a una seccion desde las tarjetas de stats
+// (cuando le dan click a "Invitados" o "Mesas" etc)
 function navigateToSection(section) {
     const navLinks = document.querySelectorAll('.sidebar-nav a');
 
@@ -152,7 +176,7 @@ function navigateToSection(section) {
     if (section === 'live-monitor') loadLiveMonitor();
 }
 
-// Muestra la fecha actual en el header
+// pone la fecha de hoy en el header del dashboard
 function updateCurrentDate() {
     const dateEl = document.getElementById('current-date');
     if (dateEl) {
@@ -161,10 +185,10 @@ function updateCurrentDate() {
     }
 }
 
-// =============================================
-// CARGA DE DATOS
-// Trae todo desde Supabase: config, mesas, pases
-// =============================================
+// -------------------------------------------
+// CARGA DE DATOS DESDE SUPABASE
+// trae toda la informacion: configuracion, mesas y pases
+// -------------------------------------------
 async function loadDashboardData() {
     await loadDashboardDataAsync();
     initRealtime();
@@ -178,7 +202,8 @@ async function loadDashboardDataAsync() {
     updateCurrentDate();
 }
 
-// Config del evento — si no existe, creamos una por default
+// trae la configuracion del evento
+// si no existe en la base de datos creamos una por default
 async function loadEventConfig() {
     const supabase = getSupabase();
     const { data, error } = await supabase
@@ -190,7 +215,7 @@ async function loadEventConfig() {
     if (data) {
         eventConfig = data;
     } else {
-        // Create default config
+        // creamos config por default si no habia ninguna
         const { data: newConfig } = await getSupabase()
             .from('configuracion_evento')
             .insert({ total_mesas: 10, asientos_por_mesa: 8 })
@@ -201,7 +226,7 @@ async function loadEventConfig() {
     }
 }
 
-// Trae todas las mesas ordenadas por numero
+// trae todas las mesas de la base de datos ordenadas por numero
 async function loadTables() {
     const supabase = getSupabase();
     const { data, error } = await supabase
@@ -222,7 +247,7 @@ async function loadTables() {
     }
 }
 
-// Actualiza los contadores de mesas en la UI
+// actualiza los contadores de mesas que se muestran en la UI
 function updateTablesCount() {
     const countEl = document.getElementById('total-tables-count');
     const capacityEl = document.getElementById('total-capacity');
@@ -233,7 +258,7 @@ function updateTablesCount() {
         capacityEl.textContent = total;
     }
 
-    // Show/hide bulk delete button
+    // mostramos u ocultamos el boton de eliminar mesas vacias
     const bulkActions = document.getElementById('tables-bulk-actions');
     if (bulkActions) {
         const hasEmptyTables = tables.some(t => t.asientos_ocupados === 0);
@@ -241,7 +266,7 @@ function updateTablesCount() {
     }
 }
 
-// Trae todos los pases con su mesa asignada
+// trae todos los pases de invitados con su mesa y registros de entrada
 async function loadPasses() {
     const supabase = getSupabase();
     const { data, error } = await supabase
@@ -257,7 +282,7 @@ async function loadPasses() {
     if (data) {
         passes = data;
 
-        // Load creator profiles for passes
+        // cargamos los nombres de quien creo cada pase
         await loadCreatorProfiles();
 
         loadRecentPasses();
@@ -265,11 +290,12 @@ async function loadPasses() {
     }
 }
 
-// Carga los perfiles de quien creo cada pase (novio o novia)
+// carga los perfiles de las personas que crearon cada pase
+// (para saber si fue el novio o la novia)
 async function loadCreatorProfiles() {
     const supabase = getSupabase();
 
-    // Get unique creator IDs
+    // sacamos los IDs unicos de los creadores
     const creatorIds = [...new Set(passes.map(p => p.creado_por).filter(Boolean))];
 
     console.log('Loading creator profiles for IDs:', creatorIds);
@@ -292,24 +318,25 @@ async function loadCreatorProfiles() {
     console.log('Loaded creator profiles:', profiles);
 
     if (profiles) {
-        // Create lookup map
+        // creamos un mapa de busqueda rapida por ID
         profiles.forEach(p => {
             userProfiles[p.id] = p;
         });
 
-        // Attach creator info to passes
+        // le agregamos la info del creador a cada pase
         passes.forEach(pass => {
             if (pass.creado_por && userProfiles[pass.creado_por]) {
                 pass.creator = userProfiles[pass.creado_por];
             }
         });
 
-        // Update filter counts
+        // actualizamos los contadores del filtro
         updateCreatorFilterCounts();
     }
 }
 
-// Actualiza los contadores del filtro "creado por" (Abidan: X, Betsaida: Y)
+// actualiza los contadores del filtro "creado por"
+// para que diga cuantos invitados agrego cada quien
 function updateCreatorFilterCounts() {
     let totalGuests = 0;
     let groomGuests = 0;
@@ -328,10 +355,10 @@ function updateCreatorFilterCounts() {
         }
     });
 
-    // Update select options
+    // actualizamos el texto de las opciones del select
     const select = document.getElementById('creator-filter');
     if (select) {
-        // Update options text while preserving values
+        // recorremos las opciones y les ponemos el conteo
         for (let i = 0; i < select.options.length; i++) {
             const option = select.options[i];
             if (option.value === 'all') {
@@ -345,9 +372,10 @@ function updateCreatorFilterCounts() {
     }
 }
 
-// =============================================
-// ESTADISTICAS — los numeritos del dashboard
-// =============================================
+// -------------------------------------------
+// ESTADISTICAS
+// los cuadritos con numeros del dashboard principal
+// -------------------------------------------
 function updateStats() {
     document.getElementById('stat-tables').textContent = tables.length;
     document.getElementById('stat-passes').textContent = passes.length;
@@ -358,7 +386,7 @@ function updateStats() {
     const totalGuests = passes.reduce((sum, p) => sum + p.total_invitados, 0);
     document.getElementById('stat-guests').textContent = totalGuests;
 
-    // Update chart
+    // actualizamos la grafica de barras tambien
     const pending = passes.filter(p => !p.confirmado).length;
     const inside = passes.filter(p => p.invitados_ingresados > 0).length;
 
@@ -366,16 +394,17 @@ function updateStats() {
     document.getElementById('chart-confirmed').textContent = confirmed;
     document.getElementById('chart-inside').textContent = inside;
 
-    // Update total capacity
+    // capacidad total de asientos
     const capacity = tables.reduce((sum, t) => sum + t.capacidad, 0);
     document.getElementById('total-capacity').textContent = capacity;
 }
 
-// =============================================
-// MESAS — visualizacion, creacion, eliminacion
-// =============================================
+// -------------------------------------------
+// GESTION DE MESAS
+// visualizacion en grid, creacion individual y masiva, eliminacion
+// -------------------------------------------
 
-// Grid visual de mesas con barrita de ocupacion
+// muestra las mesas en un grid visual con barritas de ocupacion
 function renderTablesGrid() {
     const container = document.getElementById('tables-grid');
     if (!container) return;
@@ -399,8 +428,8 @@ function renderTablesGrid() {
     }).join('');
 }
 
-// Llena el dropdown de mesas en el form de crear pase
-// Deshabilita mesas que no tienen espacio suficiente
+// llena el dropdown de mesas en el formulario de crear pase
+// las mesas que no tienen suficiente espacio se deshabilitan
 function populateTableSelect() {
     const select = document.getElementById('table-select');
     const guestInput = document.getElementById('guest-count');
@@ -412,7 +441,7 @@ function populateTableSelect() {
     select.innerHTML = '<option value="">Selecciona una mesa</option>' +
         tables.map(table => {
             const available = table.capacidad - table.asientos_ocupados;
-            // Show all tables, but disable if not enough space
+            // mostramos todas las mesas pero deshabilitamos las que no caben
             const isEnoughSpace = available >= requiredSeats;
             const disabled = !isEnoughSpace ? 'disabled' : '';
             const statusText = available === 0 ? 'llena' : `${available} lugares disponibles`;
@@ -422,7 +451,7 @@ function populateTableSelect() {
             </option>`;
         }).join('');
 
-    // Restore selection if still valid
+    // restauramos la seleccion anterior si sigue siendo valida
     if (currentSelection) {
         const option = select.querySelector(`option[value="${currentSelection}"]`);
         if (option && !option.disabled) {
@@ -433,20 +462,20 @@ function populateTableSelect() {
     }
 }
 
-// Conecta los formularios con sus handlers
+// conecta los formularios del HTML con sus funciones de manejo
 function initForms() {
-    // Tables config form
+    // formulario de configuracion de mesas
     const tablesForm = document.getElementById('tables-config-form');
     if (tablesForm) {
         tablesForm.addEventListener('submit', handleTablesConfig);
     }
 
-    // Create pass form
+    // formulario de crear pase
     const passForm = document.getElementById('create-pass-form');
     if (passForm) {
         passForm.addEventListener('submit', handleCreatePass);
 
-        // Add listener for guest count changes
+        // cuando cambia la cantidad de invitados actualizamos las mesas disponibles
         const guestInput = document.getElementById('guest-count');
         if (guestInput) {
             guestInput.addEventListener('input', () => populateTableSelect());
@@ -455,11 +484,12 @@ function initForms() {
     }
 }
 
-// =============================================
-// GESTION DE MESAS — lista, agregar, eliminar
-// =============================================
+// -------------------------------------------
+// LISTA DE MESAS
+// renderiza la lista con botones de ver y eliminar cada mesa
+// -------------------------------------------
 
-// Renderiza la lista de mesas con botones de ver y eliminar
+// renderiza la lista de mesas con su info y botones de accion
 function renderTablesList() {
     const container = document.getElementById('tables-list');
     if (!container) return;
@@ -512,7 +542,7 @@ function renderTablesList() {
     }).join('');
 }
 
-// Agrega una mesa individual con la capacidad indicada
+// agrega una sola mesa con la capacidad que el usuario indico
 async function addSingleTable() {
     const capacityInput = document.getElementById('new-table-capacity');
     const capacity = parseInt(capacityInput.value);
@@ -549,7 +579,7 @@ async function addSingleTable() {
     }
 }
 
-// Agrega varias mesas de golpe ("5 mesas de 10 personas")
+// agrega varias mesas de golpe (ej: "5 mesas de 10 personas cada una")
 async function addMultipleTables() {
     const quantityInput = document.getElementById('quick-add-quantity');
     const capacityInput = document.getElementById('quick-add-capacity');
@@ -599,7 +629,8 @@ async function addMultipleTables() {
     }
 }
 
-// Modal de confirmacion para acciones destructivas (eliminar mesa, etc)
+// muestra un modal de confirmacion antes de hacer algo peligroso
+// como eliminar mesas o pases
 function showConfirmModal(message, onConfirm, onCancel = null) {
     // Create or get modal
     let modal = document.getElementById('confirm-modal');
@@ -623,7 +654,7 @@ function showConfirmModal(message, onConfirm, onCancel = null) {
 
     modal.classList.add('active');
 
-    // Handle buttons
+    // conectamos los botones de cancelar y confirmar
     document.getElementById('confirm-cancel').onclick = () => {
         modal.classList.remove('active');
         if (onCancel) onCancel();
@@ -634,14 +665,15 @@ function showConfirmModal(message, onConfirm, onCancel = null) {
         onConfirm();
     };
 
-    // Close on overlay click
+    // click en el overlay tambien cancela
     modal.querySelector('.confirm-modal-overlay').onclick = () => {
         modal.classList.remove('active');
         if (onCancel) onCancel();
     };
 }
 
-// Elimina una mesa — si tiene invitados, los desasigna primero
+// elimina una mesa individual
+// si tiene invitados asignados primero los desasigna
 async function deleteSingleTable(tableId, tableNumber, isOccupied) {
     const message = isOccupied
         ? `¿Eliminar Mesa ${tableNumber}? Los invitados asignados quedarán sin mesa.`
@@ -651,7 +683,7 @@ async function deleteSingleTable(tableId, tableNumber, isOccupied) {
         const supabase = getSupabase();
 
         try {
-            // If table has guests, unassign them first
+            // si la mesa tenia invitados los desasignamos primero
             if (isOccupied) {
                 const { error: unassignError } = await supabase
                     .from('pases_invitados')
@@ -661,7 +693,7 @@ async function deleteSingleTable(tableId, tableNumber, isOccupied) {
                 if (unassignError) throw unassignError;
             }
 
-            // Delete the table
+            // ahora si eliminamos la mesa
             const { error } = await supabase
                 .from('mesas')
                 .delete()
@@ -680,7 +712,7 @@ async function deleteSingleTable(tableId, tableNumber, isOccupied) {
     });
 }
 
-// Elimina todas las mesas vacias de un jalon
+// elimina todas las mesas que estan vacias de un jalon
 async function deleteAllEmptyTables() {
     const emptyTables = tables.filter(t => t.asientos_ocupados === 0);
 
@@ -710,11 +742,13 @@ async function deleteAllEmptyTables() {
     });
 }
 
-// =============================================
-// PASES DE INVITADOS — crear, copiar codigo
-// =============================================
+// -------------------------------------------
+// PASES DE INVITADOS
+// crear pases, generar codigos, copiar al portapapeles
+// -------------------------------------------
 
-// Genera un codigo unico de 4 caracteres (sin I, O, 0, 1 para evitar confusion)
+// genera un codigo aleatorio de 4 caracteres
+// quita las letras I, O y los numeros 0, 1 para que no se confundan
 function generateCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
@@ -724,7 +758,8 @@ function generateCode() {
     return code;
 }
 
-// Crea un nuevo pase: genera codigo, lo guarda en Supabase y actualiza la mesa
+// crea un nuevo pase de invitado
+// genera el codigo, lo guarda en supabase y actualiza la ocupacion de la mesa
 async function handleCreatePass(e) {
     e.preventDefault();
     const supabase = getSupabase();
@@ -739,7 +774,7 @@ async function handleCreatePass(e) {
         return;
     }
 
-    // Verify capacity again (double check)
+    // Verificamos que la mesa tenga espacio suficiente (doble verificacion)
     const table = tables.find(t => t.id === tableId);
     if (!table) {
         showToast('Mesa no encontrada', 'error');
@@ -753,7 +788,7 @@ async function handleCreatePass(e) {
     }
 
     try {
-        // Generate unique code
+        // generamos un codigo unico, intentamos hasta 10 veces
         let code = generateCode();
         let isUnique = false;
         let attempts = 0;
@@ -773,7 +808,7 @@ async function handleCreatePass(e) {
             }
         }
 
-        // Create pass
+        // insertamos el pase en la base de datos
         const { data: newPass, error } = await supabase
             .from('pases_invitados')
             .insert({
@@ -788,18 +823,18 @@ async function handleCreatePass(e) {
 
         if (error) throw error;
 
-        // Update table occupied seats
+        // actualizamos los asientos ocupados de la mesa
         const table = tables.find(t => t.id === tableId);
         await supabase
             .from('mesas')
             .update({ asientos_ocupados: table.asientos_ocupados + guestCount })
             .eq('id', tableId);
 
-        // Show generated code
+        // mostramos el codigo generado en la interfaz
         document.getElementById('pass-code').textContent = code;
         document.getElementById('generated-pass').style.display = 'block';
 
-        // Reset form
+        // limpiamos el formulario
         document.getElementById('family-name').value = '';
         document.getElementById('family-phone').value = '';
         document.getElementById('guest-count').value = '2';
@@ -807,7 +842,7 @@ async function handleCreatePass(e) {
 
         showToast('Pase creado exitosamente', 'success');
 
-        // Reload data
+        // recargamos los datos
         await loadTables();
         await loadPasses();
         updateStats();
@@ -817,7 +852,7 @@ async function handleCreatePass(e) {
     }
 }
 
-// Copia el codigo recien generado al portapapeles
+// copia el codigo del pase al portapapeles
 function copyCode() {
     const code = document.getElementById('pass-code').textContent;
     navigator.clipboard.writeText(code).then(() => {
@@ -825,9 +860,10 @@ function copyCode() {
     });
 }
 
-// =============================================
-// PASES RECIENTES — tarjetas compactas
-// =============================================
+// -------------------------------------------
+// PASES RECIENTES
+// muestra los ultimos 10 pases creados en tarjetas chiquitas
+// -------------------------------------------
 function loadRecentPasses() {
     const container = document.getElementById('recent-passes');
     if (!container) return;
@@ -886,10 +922,11 @@ function loadRecentPasses() {
     }).join('');
 }
 
-// =============================================
+// -------------------------------------------
 // LISTA COMPLETA DE INVITADOS
-// Cards con toda la info: familia, mesa, creador, estado
-// =============================================
+// muestra todos los pases con su info detallada:
+// nombre de familia, mesa, quien lo creo, estado, etc
+// -------------------------------------------
 function loadGuests() {
     const container = document.getElementById('guests-list');
     if (!container) return;
@@ -915,7 +952,7 @@ function loadGuests() {
                 year: 'numeric'
             })
             : '-';
-        // Debug: Log creator info
+        // si no hay info del creador lo reportamos en consola (para debug)
         if (!pass.creator) {
             console.warn('No creator data for pass:', pass.codigo_acceso, 'created_by:', pass.creado_por);
         }
@@ -993,7 +1030,8 @@ function loadGuests() {
     }).join('');
 }
 
-// Determina el estado de un pase segun sus flags
+// esta funcion determina en que estado esta un pase
+// segun si ya entraron todos, si entraron algunos, si confirmo o si esta pendiente
 function getPassStatus(pass) {
     if (pass.todos_ingresaron) {
         return { class: 'complete', text: 'Completo' };
@@ -1007,11 +1045,11 @@ function getPassStatus(pass) {
     return { class: 'pending', text: 'Pendiente' };
 }
 
-// =============================================
-// FILTROS Y BUSQUEDA
-// =============================================
+// -------------------------------------------
+// FILTROS Y BUSQUEDA DE INVITADOS
+// -------------------------------------------
 
-// Filtra invitados por estado (todos, confirmados, adentro, pendientes)
+// filtra los invitados segun su estado
 function filterGuests(filter) {
     const cards = document.querySelectorAll('.guest-card');
     let visibleCount = 0;
@@ -1023,10 +1061,10 @@ function filterGuests(filter) {
         if (filter === 'all') {
             shouldShow = true;
         } else if (filter === 'confirmed') {
-            // Show confirmed, partial, and complete guests (anyone who confirmed)
+            // si el filtro es "confirmed" mostramos los confirmados Y los que ya entraron
             shouldShow = ['confirmed', 'partial', 'complete'].includes(status);
         } else if (filter === 'inside') {
-            // Show partial and complete guests
+            // los que estan adentro (parcial y completo)
             shouldShow = ['partial', 'complete'].includes(status);
         } else if (filter === 'pending') {
             shouldShow = status === 'pending';
@@ -1046,7 +1084,7 @@ function filterGuests(filter) {
     showEmptyState(visibleCount);
 }
 
-// Filtra invitados por quien los creo (novio o novia)
+// filtra invitados segun quien los creo (novio o novia)
 function filterByCreator(creatorRole) {
     const cards = document.querySelectorAll('.guest-card');
     let visibleCount = 0;
@@ -1068,7 +1106,7 @@ function filterByCreator(creatorRole) {
     showEmptyState(visibleCount);
 }
 
-// Busca invitados por nombre de familia
+// busca invitados por nombre de familia
 function searchGuests(query) {
     const cards = document.querySelectorAll('.guest-card');
     const q = query.toLowerCase();
@@ -1086,13 +1124,13 @@ function searchGuests(query) {
     showEmptyState(visibleCount);
 }
 
-// Muestra/oculta el mensaje de "no se encontraron resultados"
+// muestra u oculta el mensaje de "no se encontraron resultados" segun el filtro
 function showEmptyState(visibleCount) {
     const container = document.getElementById('guests-list');
     let emptyState = container.querySelector('.filter-empty-state');
 
     if (visibleCount === 0) {
-        // No results - show empty state
+        // no hay resultados, mostramos mensaje
         if (!emptyState) {
             emptyState = document.createElement('div');
             emptyState.className = 'filter-empty-state';
@@ -1107,25 +1145,26 @@ function showEmptyState(visibleCount) {
         }
         emptyState.style.display = 'block';
     } else {
-        // Has results - hide empty state
+        // si hay resultados ocultamos el mensaje
         if (emptyState) {
             emptyState.style.display = 'none';
         }
     }
 }
 
-// =============================================
-// ACCIONES DE PASES — copiar, editar, eliminar
-// =============================================
+// -------------------------------------------
+// ACCIONES DE PASES
+// copiar codigo, editar info, eliminar pase
+// -------------------------------------------
 
-// Copia codigo de pase al portapapeles
+// copia el codigo de un pase al portapapeles
 function copyPassCode(code) {
     navigator.clipboard.writeText(code).then(() => {
         showToast('Código copiado', 'success');
     });
 }
 
-// Abre un modal para editar el pase (nombre, invitados, mesa)
+// abre un modal para editar la informacion del pase
 function editPass(passId) {
     const pass = passes.find(p => p.id === passId);
     if (!pass) return;
@@ -1184,11 +1223,11 @@ function editPass(passId) {
 
     modal.classList.add('active');
 
-    // Add form submit handler
+    // conectamos el form del modal con su handler
     document.getElementById('edit-pass-form').addEventListener('submit', savePassEdit);
 }
 
-// Guarda los cambios del pase editado y reajusta la ocupacion de mesas
+// guarda los cambios que hicieron al pase y actualiza la ocupacion de mesas
 async function savePassEdit(e) {
     e.preventDefault();
     const supabase = getSupabase();
@@ -1201,7 +1240,7 @@ async function savePassEdit(e) {
     const oldTableId = document.getElementById('edit-old-table').value;
 
     try {
-        // Update guest pass
+        // actualizamos el pase en la base de datos
         await supabase
             .from('pases_invitados')
             .update({
@@ -1211,9 +1250,9 @@ async function savePassEdit(e) {
             })
             .eq('id', passId);
 
-        // Update table occupancy if table or guest count changed
+        // si cambio la mesa o la cantidad de invitados ajustamos la ocupacion
         if (newTableId !== oldTableId || newGuests !== oldGuests) {
-            // Free old table seats
+            // liberamos los asientos de la mesa anterior
             if (oldTableId) {
                 const oldTable = tables.find(t => t.id === oldTableId);
                 if (oldTable) {
@@ -1224,7 +1263,7 @@ async function savePassEdit(e) {
                 }
             }
 
-            // Occupy new table seats
+            // ocupamos asientos en la nueva mesa
             const newTable = tables.find(t => t.id === newTableId);
             if (newTable) {
                 await supabase
@@ -1245,7 +1284,7 @@ async function savePassEdit(e) {
     }
 }
 
-// Cierra el modal de edicion
+// cierra el modal de edicion del pase
 function closeEditModal() {
     const modal = document.getElementById('edit-modal');
     if (modal) {
@@ -1253,7 +1292,8 @@ function closeEditModal() {
     }
 }
 
-// Elimina un pase — borra logs, libera asientos y recarga todo
+// elimina un pase completamente
+// borra los registros de entrada, libera los asientos de la mesa
 async function deletePass(passId) {
     if (!confirm('¿Estás seguro de eliminar este pase?')) return;
     const supabase = getSupabase();
@@ -1261,7 +1301,7 @@ async function deletePass(passId) {
     try {
         const pass = passes.find(p => p.id === passId);
 
-        // Update table seats
+        // actualizamos la ocupacion de la mesa
         if (pass && pass.mesa_id) {
             const table = tables.find(t => t.id === pass.mesa_id);
             if (table) {
@@ -1272,10 +1312,10 @@ async function deletePass(passId) {
             }
         }
 
-        // First delete entry logs to avoid foreign key constraints/persistence issues
+        // primero borramos los registros de entrada para evitar errores de llave foranea
         await supabase.from('registros_entrada').delete().eq('pase_id', passId);
 
-        // Then delete the pass
+        // ahora si borramos el pase
         await supabase.from('pases_invitados').delete().eq('id', passId);
 
         showToast('Pase eliminado', 'success');
@@ -1288,9 +1328,10 @@ async function deletePass(passId) {
     }
 }
 
-// =============================================
-// TOAST — notificaciones temporales
-// =============================================
+// -------------------------------------------
+// TOAST (notificaciones)
+// muestra mensajes temporales en la esquina
+// -------------------------------------------
 function showToast(message, type = 'info') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -1304,11 +1345,12 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 4000);
 }
 
-// =============================================
-// MODAL DE MESA — muestra invitados asignados a una mesa
-// =============================================
+// -------------------------------------------
+// MODAL DE INVITADOS POR MESA
+// cuando le das click a una mesa te muestra quienes estan asignados
+// -------------------------------------------
 function showTableGuests(tableId, tableNumber) {
-    // Find guests assigned to this table
+    // buscamos todos los pases que esten asignados a esta mesa
     const tableGuests = passes.filter(p => p.mesa_id === tableId);
 
     // Create or get modal
@@ -1320,7 +1362,7 @@ function showTableGuests(tableId, tableNumber) {
         document.body.appendChild(modal);
     }
 
-    // Build guest list
+    // armamos el HTML con la lista de invitados
     let guestListHTML = '';
     if (tableGuests.length === 0) {
         guestListHTML = '<p class="no-guests">No hay invitados asignados a esta mesa</p>';
@@ -1362,7 +1404,7 @@ function showTableGuests(tableId, tableNumber) {
     modal.classList.add('active');
 }
 
-// Cierra el modal de invitados por mesa
+// cierra el modal de invitados por mesa
 function closeTableModal() {
     const modal = document.getElementById('table-modal');
     if (modal) {
@@ -1370,11 +1412,12 @@ function closeTableModal() {
     }
 }
 
-// =============================================
-// CSS DINAMICO
-// Estilos que se inyectan con JS porque no estan en el CSS principal
-// (lo ideal seria mover esto a dashboard.css pero aqui funciona)
-// =============================================
+// -------------------------------------------
+// ESTILOS CSS DINAMICOS
+// estos estilos se inyectan con JavaScript porque no estan
+// en el archivo CSS principal (lo ideal seria moverlos ahi
+// pero por el momento aqui funcionan bien)
+// -------------------------------------------
 const style = document.createElement('style');
 style.textContent = `
                         .dashboard-section {
@@ -1853,11 +1896,13 @@ style.textContent = `
                         `;
 document.head.appendChild(style);
 
-// =============================================
-// MONITOR EN VIVO — tabla de invitados que ya estan adentro
-// =============================================
+// -------------------------------------------
+// MONITOR EN VIVO
+// muestra una tabla con los invitados que ya estan adentro del evento
+// se actualiza automaticamente con realtime
+// -------------------------------------------
 function loadLiveMonitor() {
-    // Filter passes that have entered guests
+    // filtramos solo los pases que tienen al menos 1 persona adentro
     const activePasses = passes.filter(p => p.invitados_ingresados > 0);
 
     // Sort by most recent update (approximate entry time)
@@ -1886,7 +1931,7 @@ function loadLiveMonitor() {
     if (totalEl) totalEl.textContent = totalInside;
     if (familiesEl) familiesEl.textContent = activePasses.length;
 
-    // Render table
+    // renderizamos la tabla con los datos
     const tbody = document.getElementById('live-guests-list');
     if (!tbody) return;
 
@@ -1923,9 +1968,11 @@ function loadLiveMonitor() {
     }).join('');
 }
 
-// =============================================
-// REALTIME — se actualiza solo cuando cambian los pases
-// =============================================
+// -------------------------------------------
+// TIEMPO REAL (REALTIME)
+// nos suscribimos a cambios en la tabla pases_invitados
+// para que el dashboard se actualice automaticamente
+// -------------------------------------------
 function initRealtime() {
     const supabase = getSupabase();
     console.log('Initializing realtime subscription...');
@@ -1946,10 +1993,11 @@ function initRealtime() {
         .subscribe();
 }
 
-// =============================================
-// WHATSAPP — genera un boton con mensaje pre-armado
-// para enviar la invitacion por WhatsApp
-// =============================================
+// -------------------------------------------
+// BOTON DE WHATSAPP
+// genera un boton para enviar la invitacion por WhatsApp
+// con el mensaje ya armado y el codigo del pase
+// -------------------------------------------
 function getWhatsAppButton(pass, type = 'card') {
     if (!pass.telefono) return '';
 

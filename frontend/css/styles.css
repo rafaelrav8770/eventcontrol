@@ -1,8 +1,6 @@
-/* ============================================
-   styles.css — Estilos de la invitacion de boda
-   Pagina principal con Hero, countdown, galeria,
-   timeline, RSVP, lightbox y mas.
-   ============================================ */
+/* styles.css — Estilos principales de la pagina de invitacion
+   aqui esta todo: Hero, countdown, galeria, timeline,
+   RSVP, lightbox, animaciones y responsive */
 
 /* --- Variables globales: colores, fuentes, sombras --- */
 :root {
@@ -1946,10 +1944,10 @@ button {
     }
 }
 
-/* ============================================
+/* ------------------------------------------
    DESKTOP — Estilos para pantallas grandes
    Hace que toda la pagina se vea bien en PC
-   ============================================ */
+   ------------------------------------------ */
 
 /* --- Desktop mediano (tablets landscape, laptops) --- */
 @media (min-width: 769px) {

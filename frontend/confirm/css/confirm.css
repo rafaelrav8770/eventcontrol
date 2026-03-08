@@ -1,8 +1,6 @@
-/* ============================================
-   confirm.css — Estilos de la pagina de confirmacion
-   Donde el invitado ingresa su codigo, ve su info,
-   genera QR y descarga su invitacion.
-   ============================================ */
+/* confirm.css — Estilos de la pagina de confirmacion
+   donde el invitado mete su codigo de 4 digitos,
+   ve su informacion, genera el QR y descarga su invitacion */
 :root {
     --primary: #b8860b;
     --primary-light: #d4a853;
