@@ -406,7 +406,7 @@ button {
 /* Bajar todo el contenido de la portada en movil solamente */
 @media (max-width: 768px) {
     .enter-btn {
-        margin-top: 40px;
+        margin-top: 15px;
     }
 
     /* Baja TODO el bloque central para no tapar las caras */
